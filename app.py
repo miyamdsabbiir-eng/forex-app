@@ -1,8 +1,8 @@
-importt streamlit as st
+import streamlit as st
 import yfinance as yf
 import pandas as pd
-import taimportt time
-
+import ta
+import time
 # পেজ সেটআপ
 st.set_page_config(page_title="Sabbir's Multi-Asset Alert", layout="centered")
 
