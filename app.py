@@ -10,103 +10,98 @@ st.set_page_config(
     layout="wide"
 )
 
-# প্রিমিয়াম, মডার্ন এবং মোটা প্রোগ্রেস বার সহ চমৎকার CSS স্টাইলিং
+# স্টাইলিং: ব্যাকগ্রাউন্ড সাদা, লেখা শুধু লাল ও সবুজ, এবং কার্ডগুলো কালারফুল (কালো ছাড়া)
 st.markdown("""
     <style>
-    .main { background-color: #070913; color: #ffffff; }
-    .stApp { background-color: #070913; }
+    .stApp { background-color: #ffffff; color: #000000; }
     
     .main-title {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: 800;
-        background: linear-gradient(90deg, #60a5fa, #34d399);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #059669;
         text-align: center;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
     }
     
     .card {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        padding: 22px;
-        border-radius: 18px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-        margin-bottom: 20px;
-        border: 1px solid #334155;
+        background: linear-gradient(135deg, #fef9c3 0%, #ecfdf5 100%);
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        margin-bottom: 15px;
+        border: 2px solid #fde047;
     }
     
     .alert-buy {
-        background: linear-gradient(90deg, #064e3b 0%, #022c22 100%);
-        padding: 16px;
-        border-radius: 14px;
-        border-left: 6px solid #34d399;
-        margin-bottom: 12px;
-        color: #a7f3d0;
-        font-weight: 600;
-        box-shadow: 0 4px 12px rgba(6,78,59,0.3);
+        background-color: #ecfdf5;
+        padding: 14px;
+        border-radius: 12px;
+        border-left: 6px solid #10b981;
+        margin-bottom: 10px;
+        color: #059669;
+        font-weight: 700;
     }
     
     .alert-sell {
-        background: linear-gradient(90deg, #451a03 0%, #291002 100%);
-        padding: 16px;
-        border-radius: 14px;
-        border-left: 6px solid #f87171;
-        margin-bottom: 12px;
-        color: #fca5a5;
-        font-weight: 600;
-        box-shadow: 0 4px 12px rgba(69,26,3,0.3);
+        background-color: #fef2f2;
+        padding: 14px;
+        border-radius: 12px;
+        border-left: 6px solid #ef4444;
+        margin-bottom: 10px;
+        color: #dc2626;
+        font-weight: 700;
     }
     
-    .pair-title { color: #60a5fa; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
-    .price-text { color: #34d399; font-size: 20px; font-weight: 700; }
+    .pair-title { color: #1e3a8a; font-size: 20px; font-weight: 700; }
     
-    /* সেন্টিমেন্ট প্রোগ্রেস বারটিকে মোটা ও সুন্দর করার জন্য */
+    /* প্রোগ্রেস বার */
     .stProgress > div > div > div > div {
-        height: 16px !important;
-        border-radius: 10px !important;
-        background: linear-gradient(90deg, #34d399, #60a5fa);
+        height: 14px !important;
+        border-radius: 8px !important;
+        background: linear-gradient(90deg, #10b981, #ef4444);
     }
     .stProgress > div > div > div {
-        height: 16px !important;
-        border-radius: 10px !important;
-        background-color: #334155 !important;
+        height: 14px !important;
+        border-radius: 8px !important;
+        background-color: #fef08a !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-title">🚀 সাব্বির ভাইয়ের ফুল অটো স্মার্ট মানি ও সেন্টিমেন্ট ড্যাশবোর্ড</div>', unsafe_allow_html=True)
 
-# ব্রাউজার ভয়েস অ্যালার্ট ফাংশন
-def trigger_voice_alert(message):
-    js_code = f"""
-    <script>
-        var msg = new SpeechSynthesisUtterance("{message}");
-        msg.rate = 1.0;
-        msg.pitch = 1.0;
-        window.speechSynthesis.speak(msg);
-    </script>
-    """
-    st.markdown(js_code, unsafe_allow_html=True)
+# স্পিকার কন্ট্রোল সুইচ
+with st.sidebar:
+    st.header("⚙️ কন্ট্রোল প্যানেল")
+    voice_on = st.toggle("🔊 স্পিকার ভয়েস অ্যালার্ট অন/অফ", value=True)
 
-# অ্যাপে প্রথমবার প্রবেশ করার সাথে সাথেই স্পিকারে বলার জন্য ওয়েলকাম ভয়েস লজিক
-if 'welcomed' not in st.session_state:
-    st.session_state.welcomed = True
-    trigger_voice_alert("স্বাগতম সাব্বির ভাই! আপনার ফুল অটো স্মার্ট মানি এবং ফরেক্স ড্যাশবোর্ড চালু হয়েছে।")
+# ভয়েস অ্যালার্ট ফাংশন
+def trigger_voice_alert(message):
+    if voice_on:
+        js_code = f"""
+        <script>
+            var msg = new SpeechSynthesisUtterance("{message}");
+            msg.rate = 1.0;
+            msg.pitch = 1.0;
+            window.speechSynthesis.speak(msg);
+        </script>
+        """
+        st.markdown(js_code, unsafe_allow_html=True)
 
 # টপ স্ট্যাটাস বার
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric(label="সিস্টেম স্ট্যাটাস", value="ফুল অটো মোড", delta="স্বয়ংক্রিয় আপডেট")
+    st.metric(label="সিস্টেম স্ট্যাটাস", value="ফুল অটো মোড", delta="লাইভ রানিং")
 with col2:
     st.metric(label="সেন্টিমেন্ট মোড", value="ব্যালেন্সড ও ন্যাচারাল")
 with col3:
-    st.metric(label="স্পিকার ভয়েস", value="সক্রিয় (Active)", delta="🔊 On")
+    st.metric(label="স্পিকার ভয়েস", value="সক্রিয়" if voice_on else "বন্ধ", delta="🔊 On" if voice_on else "🔇 Off")
 
 st.markdown("---")
 
 symbols = ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "USDCAD=X", "AUDUSD=X"]
 
-# ব্যালেন্সড সেন্টিমেন্ট ও ডেটা ফেচিং ফাংশন
+# ডেটা ফেচিং ফাংশন
 def get_forex_data(symbol):
     try:
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1m"
@@ -120,7 +115,6 @@ def get_forex_data(symbol):
             prev_close = meta['chartPreviousClose']
             change = ((price - prev_close) / prev_close) * 100
             
-            # সেন্টিমেন্ট ব্যালেন্সড রেঞ্জ
             base_sentiment = 50 + int(change * 15)
             if base_sentiment > 72: buyer_pct = 72
             elif base_sentiment < 28: buyer_pct = 28
@@ -128,7 +122,6 @@ def get_forex_data(symbol):
             
             seller_pct = 100 - buyer_pct
             
-            # স্মার্ট মানি ডিরেকশন
             if change >= 0:
                 sm_direction = "BUY (Institutional Bullish Trend)"
                 sm_color_tag = "green"
@@ -141,7 +134,7 @@ def get_forex_data(symbol):
         pass
     return None, 50, 50, "Neutral", "gray", 0.0
 
-# প্রতি ১ মিনিট পরপর ফুল অটো আপডেট ফ্রেমওয়ার্ক (কোনো ম্যানুয়াল বাটনের প্রয়োজন নেই)
+# ফুল অটো আপডেট ফ্রেমওয়ার্ক
 @st.fragment(run_every=60)
 def auto_dashboard():
     st.caption(f"⏱️ সর্বশেষ আপডেট: {time.strftime('%I:%M:%S %p')} | সিস্টেম সম্পূর্ণ অটোমেটিক লাইভ মোডে চলছে...")
@@ -160,45 +153,50 @@ def auto_dashboard():
         
         with cols[idx % 2]:
             if price is not None:
+                price_color = "#059669" if change >= 0 else "#dc2626"
+                dir_color = "#059669" if sm_color_tag == 'green' else "#dc2626"
+                
                 st.markdown(f"""
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="pair-title">{display_name}</span>
-                        <span class="price-text">{price:.4f}</span>
+                        <span style="color: {price_color}; font-size: 19px; font-weight: 800;">{price:.4f}</span>
                     </div>
-                    <div style="color: #94a3b8; margin-top: 6px; font-size: 14px;">মার্কেট পরিবর্তন: <b style="color: {'#34d399' if change>=0 else '#f87171'};">{change:+.2f}%</b></div>
-                    <div style="margin-top: 10px; font-size: 15px;"><b>স্মার্ট মানি ডিরেকশন:</b> <span style="color: {'#34d399' if sm_color_tag=='green' else '#f87171'}; font-weight: bold;">{sm_direction}</span></div>
-                    <div style="margin-top: 10px; color: #e2e8f0; font-size: 14px;">
-                        🟢 বায়ার সেন্টিমেন্ট: <b style="color: #34d399;">{buyer}%</b> &nbsp;|&nbsp; 🔴 সেলার সেন্টিমেন্ট: <b style="color: #f87171;">{seller}%</b>
+                    <div style="margin-top: 8px; font-size: 14px; font-weight: 700; color: {price_color};">মার্কেট পরিবর্তন: {change:+.2f}%</div>
+                    <div style="margin-top: 8px; font-size: 14px; font-weight: 700; color: {dir_color};">স্মার্ট মানি ডিরেকশন: {sm_direction}</div>
+                    <div style="margin-top: 8px; font-size: 14px; font-weight: 700; color: #1e293b;">
+                        📊 রিটেল ট্রেডার সেন্টিমেন্ট: 
+                        <span style="color: #059669;">বায়ার {buyer}%</span> &nbsp;|&nbsp; 
+                        <span style="color: #dc2626;">সেলার {seller}%</span>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # মোটা এবং সুন্দর প্রোগ্রেস বার
                 st.progress(float(buyer / 100.0))
                 
-                # স্মার্ট মানি বাই বা সেল অ্যালার্ট এবং ভয়েস
+                # স্মার্ট মানি সিগন্যাল ও ভয়েস অ্যালার্ট (সাথে রিটেল পার্সেন্টেজ যুক্ত করা হলো)
                 if sm_color_tag == 'green':
-                    alert_text = f"সাব্বیر ভাই! {display_name} পেয়ারে স্মার্ট মানি বাই এন্ট্রি নিয়েছে!"
-                    st.markdown(f'<div class="alert-buy">🟢 <b>স্মার্ট মানি বাই সিগন্যাল:</b> {alert_text}</div>', unsafe_allow_html=True)
+                    alert_text = f"সাব্বির ভাই! {display_name} পেয়ারে স্মার্ট মানি বাই এন্ট্রি নিয়েছে। বর্তমানে রিটেল ট্রেডারদের বায়ারে আছে {buyer} শতাংশ এবং সেலারে আছে {seller} শতাংশ।"
+                    st.markdown(f'<div class="alert-buy">🟢 <b>স্মার্ট মানি বাই সিগন্যাল:</b> {display_name} পেয়ারে স্মার্ট মানি বাই এন্ট্রি নিয়েছে (রিটেল বায়ার: {buyer}%, সেলার: {seller}%)</div>', unsafe_allow_html=True)
                     trigger_voice_alert(alert_text)
                 else:
-                    alert_text = f"সাব্বির ভাই! {display_name} পেয়ারে স্মার্ট মানি সেল এন্ট্রি নিয়েছে!"
-                    st.markdown(f'<div class="alert-sell">🔴 <b>স্মার্ট মানি সেল সিগন্যাল:</b> {alert_text}</div>', unsafe_allow_html=True)
+                    alert_text = f"সাব্বির ভাই! {display_name} পেয়ারে স্মার্ট মানি সেল এন্ট্রি নিয়েছে। বর্তমানে রিটেল ট্রেডারদের বায়ারে আছে {buyer} শতাংশ এবং সেলার রয়েছে {seller} শতাংশ।"
+                    st.markdown(f'<div class="alert-sell">🔴 <b>স্মার্ট মানি সেল সিগন্যাল:</b> {display_name} পেয়ারে স্মার্ট মানি সেল এন্ট্রি নিয়েছে (রিটেল বায়ার: {buyer}%, সেলার: {seller}%)</div>', unsafe_allow_html=True)
                     trigger_voice_alert(alert_text)
                     
-                # সেন্টিমেন্ট ট্র্যাপ অ্যালার্ট
+                # সেন্টিমেন্ট বা ট্র্যাপ অ্যালার্ট
                 if buyer >= 70:
-                    trap_text = f"সাব্বির ভাই! {display_name} পেয়ারে রিটেইলদের বাই চাপ বেড়ে সত্তরের ওপরে গেছে!"
-                    st.markdown(f'<div class="alert-sell">⚠️ <b>সেন্টিমেন্ট অ্যালার্ট:</b> {trap_text}</div>', unsafe_allow_html=True)
+                    trap_text = f"সাব্বির ভাই সতর্ক হোন! {display_name} পেয়ারে রিটেইল ট্রেডারদের বাই চাপ বেড়ে হয়েছে {buyer} শতাংশ!"
+                    st.markdown(f'<div class="alert-sell">⚠️ <b>সেন্টিমেন্ট ট্র্যাপ অ্যালার্ট:</b> রিটেল বাই চাপ অতিরিক্ত ({buyer}%)!</div>', unsafe_allow_html=True)
                     trigger_voice_alert(trap_text)
                 elif seller >= 70:
-                    trap_text = f"সাব্বির ভাই! {display_name} পেয়ারে রিটেইলদের সেল চাপ বেড়ে সত্তরের ওপরে গেছে!"
-                    st.markdown(f'<div class="alert-sell">⚠️ <b>সেন্টিমেন্ট অ্যালার্ট:</b> {trap_text}</div>', unsafe_allow_html=True)
+                    trap_text = f"সাব্বির ভাই সতর্ক হোন! {display_name} পেয়ারে রিটেইল ট্রেডারদের সেল চাপ বেড়ে হয়েছে {seller} শতাংশ!"
+                    st.markdown(f'<div class="alert-sell">⚠️ <b>সেন্টিমেন্ট ট্র্যাপ অ্যালার্ট:</b> রিটেল সেল চাপ অতিরিক্ত ({seller}%)!</div>', unsafe_allow_html=True)
                     trigger_voice_alert(trap_text)
             else:
                 st.error(f"{display_name} এর ডেটা লোড করতে সমস্যা হচ্ছে।")
         idx += 1
 
 auto_dashboard()
+
 
