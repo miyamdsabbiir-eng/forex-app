@@ -5,47 +5,78 @@ import time
 
 # পেজ কনফিগারেশন
 st.set_page_config(
-    page_title="Sabbir's Pro Forex & SMC Tracker",
-    page_icon="📊",
+    page_title="Sabbir's Ultimate Pro Forex Dashboard",
+    page_icon="📈",
     layout="wide"
 )
 
-# প্রিমিয়াম CSS স্টাইলিং
+# প্রিমিয়াম, মডার্ন এবং মোটা প্রোগ্রেস বার সহ চমৎকার CSS স্টাইলিং
 st.markdown("""
     <style>
-    .main { background-color: #0b0f19; color: #ffffff; }
-    .stApp { background-color: #0b0f19; }
+    .main { background-color: #070913; color: #ffffff; }
+    .stApp { background-color: #070913; }
+    
     .main-title {
-        font-size: 26px;
-        font-weight: bold;
-        color: #60a5fa;
+        font-size: 28px;
+        font-weight: 800;
+        background: linear-gradient(90deg, #60a5fa, #34d399);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
+    
     .card {
-        background: linear-gradient(145deg, #1f293d 0%, #111827 100%);
-        padding: 20px;
-        border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        padding: 22px;
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
         margin-bottom: 20px;
-        border: 1px solid #374151;
+        border: 1px solid #334155;
     }
-    .alert-card {
-        background-color: #2d1515;
-        padding: 15px;
-        border-radius: 12px;
-        border-left: 5px solid #f87171;
+    
+    .alert-buy {
+        background: linear-gradient(90deg, #064e3b 0%, #022c22 100%);
+        padding: 16px;
+        border-radius: 14px;
+        border-left: 6px solid #34d399;
+        margin-bottom: 12px;
+        color: #a7f3d0;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(6,78,59,0.3);
+    }
+    
+    .alert-sell {
+        background: linear-gradient(90deg, #451a03 0%, #291002 100%);
+        padding: 16px;
+        border-radius: 14px;
+        border-left: 6px solid #f87171;
         margin-bottom: 12px;
         color: #fca5a5;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(69,26,3,0.3);
     }
-    .pair-title { color: #60a5fa; font-size: 20px; font-weight: bold; }
-    .price-text { color: #34d399; font-size: 18px; font-weight: bold; }
+    
+    .pair-title { color: #60a5fa; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+    .price-text { color: #34d399; font-size: 20px; font-weight: 700; }
+    
+    /* সেন্টিমেন্ট প্রোগ্রেস বারটিকে মোটা ও সুন্দর করার জন্য */
+    .stProgress > div > div > div > div {
+        height: 16px !important;
+        border-radius: 10px !important;
+        background: linear-gradient(90deg, #34d399, #60a5fa);
+    }
+    .stProgress > div > div > div {
+        height: 16px !important;
+        border-radius: 10px !important;
+        background-color: #334155 !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-title">📊 সাব্বির ভাইয়ের প্রো ফরেক্স সেন্টিমেন্ট ও স্মার্ট মানি ট্র্যাকার</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">🚀 সাব্বির ভাইয়ের ফুল অটো স্মার্ট মানি ও সেন্টিমেন্ট ড্যাশবোর্ড</div>', unsafe_allow_html=True)
 
-# ব্রাউজার ভয়েস অ্যালার্ট (Text-to-Speech) ফাংশন
+# ব্রাউজার ভয়েস অ্যালার্ট ফাংশন
 def trigger_voice_alert(message):
     js_code = f"""
     <script>
@@ -57,20 +88,25 @@ def trigger_voice_alert(message):
     """
     st.markdown(js_code, unsafe_allow_html=True)
 
+# অ্যাপে প্রথমবার প্রবেশ করার সাথে সাথেই স্পিকারে বলার জন্য ওয়েলকাম ভয়েস লজিক
+if 'welcomed' not in st.session_state:
+    st.session_state.welcomed = True
+    trigger_voice_alert("স্বাগতম সাব্বির ভাই! আপনার ফুল অটো স্মার্ট মানি এবং ফরেক্স ড্যাশবোর্ড চালু হয়েছে।")
+
 # টপ স্ট্যাটাস বার
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric(label="আপডেট ইন্টারভাল", value="প্রতি ১ মিনিট", delta="স্টেবল মোড")
+    st.metric(label="সিস্টেম স্ট্যাটাস", value="ফুল অটো মোড", delta="স্বয়ংক্রিয় আপডেট")
 with col2:
-    st.metric(label="অ্যানালাইসিস মোড", value="SMC + Retail 80% Trap")
+    st.metric(label="সেন্টিমেন্ট মোড", value="ব্যালেন্সড ও ন্যাচারাল")
 with col3:
-    st.metric(label="স্পিকার অ্যালার্ট", value="সক্রিয় (Active)", delta="🔊 On")
+    st.metric(label="স্পিকার ভয়েস", value="সক্রিয় (Active)", delta="🔊 On")
 
 st.markdown("---")
 
 symbols = ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "USDCAD=X", "AUDUSD=X"]
 
-# Yahoo Finance থেকে লাইভ প্রাইস আনার ফাংশন
+# ব্যালেন্সড সেন্টিমেন্ট ও ডেটা ফেচিং ফাংশন
 def get_forex_data(symbol):
     try:
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1m"
@@ -84,29 +120,31 @@ def get_forex_data(symbol):
             prev_close = meta['chartPreviousClose']
             change = ((price - prev_close) / prev_close) * 100
             
-            # সেন্টিমেন্ট ক্যালকুলেশন
-            base_sentiment = 50 + int(change * 25)
-            if base_sentiment > 85: buyer_pct = 85
-            elif base_sentiment < 15: buyer_pct = 15
+            # সেন্টিমেন্ট ব্যালেন্সড রেঞ্জ
+            base_sentiment = 50 + int(change * 15)
+            if base_sentiment > 72: buyer_pct = 72
+            elif base_sentiment < 28: buyer_pct = 28
             else: buyer_pct = base_sentiment
             
             seller_pct = 100 - buyer_pct
             
-            # স্মার্ট মানি মুভমেন্ট ডিটেকশন
-            if abs(change) > 0.15:
-                sm_action = "Institutional BOS (Smart Money Buying/Selling)"
+            # স্মার্ট মানি ডিরেকশন
+            if change >= 0:
+                sm_direction = "BUY (Institutional Bullish Trend)"
+                sm_color_tag = "green"
             else:
-                sm_action = "Liquidity Accumulation (Range Bound)"
+                sm_direction = "SELL (Institutional Bearish Trend)"
+                sm_color_tag = "red"
                 
-            return price, buyer_pct, seller_pct, sm_action, change
+            return price, buyer_pct, seller_pct, sm_direction, sm_color_tag, change
     except Exception as e:
         pass
-    return None, 50, 50, "ডেটা লোড হচ্ছে...", 0.0
+    return None, 50, 50, "Neutral", "gray", 0.0
 
-# প্রতি ১ মিনিট (60 সেকেন্ড) পর পর রিফ্রেশ করার জন্য st.fragment ব্যবহার করা হচ্ছে
+# প্রতি ১ মিনিট পরপর ফুল অটো আপডেট ফ্রেমওয়ার্ক (কোনো ম্যানুয়াল বাটনের প্রয়োজন নেই)
 @st.fragment(run_every=60)
-def render_dashboard():
-    st.caption(f"⏱️ সর্বশেষ আপডেট: {time.strftime('%I:%M:%S %p')} | প্রতি ১ মিনিট পরপর স্বয়ংক্রিয়ভাবে আপডেট হচ্ছে...")
+def auto_dashboard():
+    st.caption(f"⏱️ সর্বশেষ আপডেট: {time.strftime('%I:%M:%S %p')} | সিস্টেম সম্পূর্ণ অটোমেটিক লাইভ মোডে চলছে...")
     
     cols = st.columns(2)
     idx = 0
@@ -118,7 +156,7 @@ def render_dashboard():
         elif sym == "USDCAD=X": display_name = "USD/CAD"
         elif sym == "AUDUSD=X": display_name = "AUD/USD"
 
-        price, buyer, seller, sm_action, change = get_forex_data(sym)
+        price, buyer, seller, sm_direction, sm_color_tag, change = get_forex_data(sym)
         
         with cols[idx % 2]:
             if price is not None:
@@ -128,38 +166,39 @@ def render_dashboard():
                         <span class="pair-title">{display_name}</span>
                         <span class="price-text">{price:.4f}</span>
                     </div>
-                    <div style="color: #9ca3af; margin-top: 5px; font-size: 14px;">মার্কেট পরিবর্তন: {change:+.2f}%</div>
-                    <div style="margin-top: 8px; color: #e5e7eb; font-size: 14px;"><b>স্মার্ট মানি:</b> {sm_action}</div>
-                    <div style="margin-top: 8px; color: #d1d5db; font-size: 14px;">
-                        🟢 রিটেইল বায়ার: <b style="color: #34d399;">{buyer}%</b> &nbsp;|&nbsp; 🔴 রিটেইল সেলার: <b style="color: #f87171;">{seller}%</b>
+                    <div style="color: #94a3b8; margin-top: 6px; font-size: 14px;">মার্কেট পরিবর্তন: <b style="color: {'#34d399' if change>=0 else '#f87171'};">{change:+.2f}%</b></div>
+                    <div style="margin-top: 10px; font-size: 15px;"><b>স্মার্ট মানি ডিরেকশন:</b> <span style="color: {'#34d399' if sm_color_tag=='green' else '#f87171'}; font-weight: bold;">{sm_direction}</span></div>
+                    <div style="margin-top: 10px; color: #e2e8f0; font-size: 14px;">
+                        🟢 বায়ার সেন্টিমেন্ট: <b style="color: #34d399;">{buyer}%</b> &nbsp;|&nbsp; 🔴 সেলার সেন্টিমেন্ট: <b style="color: #f87171;">{seller}%</b>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
+                # মোটা এবং সুন্দর প্রোগ্রেস বার
                 st.progress(float(buyer / 100.0))
                 
-                # রিটেইল ট্রেডাররা ৮০% বা তার বেশি হলে স্পিকারে ভয়েস অ্যালার্ট
-                if buyer >= 80:
-                    alert_text = f"সাব্বির ভাই! সাবধান! {display_name} পেয়ারে রিটেইল ট্রেডাররা ৮০ পার্সেন্টের বেশি বাই নিয়েছে, বড় ট্র্যাপ হতে পারে!"
-                    st.markdown(f'<div class="alert-card">⚠️ <b>রিটেইল ট্র্যাপ অ্যালার্ট:</b> {alert_text}</div>', unsafe_allow_html=True)
+                # স্মার্ট মানি বাই বা সেল অ্যালার্ট এবং ভয়েস
+                if sm_color_tag == 'green':
+                    alert_text = f"সাব্বیر ভাই! {display_name} পেয়ারে স্মার্ট মানি বাই এন্ট্রি নিয়েছে!"
+                    st.markdown(f'<div class="alert-buy">🟢 <b>স্মার্ট মানি বাই সিগন্যাল:</b> {alert_text}</div>', unsafe_allow_html=True)
+                    trigger_voice_alert(alert_text)
+                else:
+                    alert_text = f"সাব্বির ভাই! {display_name} পেয়ারে স্মার্ট মানি সেল এন্ট্রি নিয়েছে!"
+                    st.markdown(f'<div class="alert-sell">🔴 <b>স্মার্ট মানি সেল সিগন্যাল:</b> {alert_text}</div>', unsafe_allow_html=True)
                     trigger_voice_alert(alert_text)
                     
-                elif seller >= 80:
-                    alert_text = f"সাব্বির ভাই! সাবধান! {display_name} পেয়ারে রিটেইল ট্রেডাররা ৮০ পার্সেন্টের বেশি সেল নিয়েছে, বড় ট্র্যাপ হতে পারে!"
-                    st.markdown(f'<div class="alert-card">⚠️ <b>রিটেইল ট্র্যাপ অ্যালার্ট:</b> {alert_text}</div>', unsafe_allow_html=True)
-                    trigger_voice_alert(alert_text)
-                    
-                # স্মার্ট মানি বা বিওএস (BOS) অ্যালার্ট
-                if "BOS" in sm_action:
-                    sm_alert = f"সাব্বیر ভাই! {display_name} পেয়ারে স্মার্ট মানি ব্রেক অফ স্ট্রাকচার বা বড় এন্ট্রি নিয়েছে!"
-                    st.markdown(f'<div class="alert-card" style="border-left-color: #60a5fa; background-color: #111c2e; color: #93c5fd;">🚨 <b>স্মার্ট মানি অ্যালার্ট:</b> {sm_alert}</div>', unsafe_allow_html=True)
-                    trigger_voice_alert(sm_alert)
+                # সেন্টিমেন্ট ট্র্যাপ অ্যালার্ট
+                if buyer >= 70:
+                    trap_text = f"সাব্বির ভাই! {display_name} পেয়ারে রিটেইলদের বাই চাপ বেড়ে সত্তরের ওপরে গেছে!"
+                    st.markdown(f'<div class="alert-sell">⚠️ <b>সেন্টিমেন্ট অ্যালার্ট:</b> {trap_text}</div>', unsafe_allow_html=True)
+                    trigger_voice_alert(trap_text)
+                elif seller >= 70:
+                    trap_text = f"সাব্বির ভাই! {display_name} পেয়ারে রিটেইলদের সেল চাপ বেড়ে সত্তরের ওপরে গেছে!"
+                    st.markdown(f'<div class="alert-sell">⚠️ <b>সেন্টিমেন্ট অ্যালার্ট:</b> {trap_text}</div>', unsafe_allow_html=True)
+                    trigger_voice_alert(trap_text)
             else:
-                st.error(f"{display_name} এর ডেটা আনতে সমস্যা হচ্ছে।")
+                st.error(f"{display_name} এর ডেটা লোড করতে সমস্যা হচ্ছে।")
         idx += 1
 
-render_dashboard()
+auto_dashboard()
 
-st.markdown("---")
-if st.button("🔄 এখনই ম্যানুয়াল আপডেট করুন", use_container_width=True):
-    st.rerun()
