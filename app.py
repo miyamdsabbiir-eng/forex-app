@@ -54,7 +54,6 @@ st.markdown("""
     
     .pair-title { color: #1e3a8a; font-size: 20px; font-weight: 700; }
     
-    /* প্রোগ্রেস বার */
     .stProgress > div > div > div > div {
         height: 14px !important;
         border-radius: 8px !important;
@@ -70,10 +69,24 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🚀 সাব্বির ভাইয়ের ফুল অটো স্মার্ট মানি ও সেন্টিমেন্ট ড্যাশবোর্ড</div>', unsafe_allow_html=True)
 
-# স্পিকার কন্ট্রোল সুইচ
+# কন্ট্রোল প্যানেল ও স্পিকার পারমিশন বাটন
 with st.sidebar:
     st.header("⚙️ কন্ট্রোল প্যানেল")
     voice_on = st.toggle("🔊 স্পিকার ভয়েস অ্যালার্ট অন/অফ", value=True)
+    
+    st.markdown("---")
+    st.markdown("💡 **গুরুত্বপূর্ণ:**")
+    # ব্রাউজারের রেস্ট্রিকশন কাটাতে এই বাটনে একবার টাচ করলেই স্পিকার আনলক হয়ে যাবে
+    if st.button("🔊 স্পিকার ভয়েস চালু করুন"):
+        start_js = """
+        <script>
+            var startMsg = new SpeechSynthesisUtterance("সাব্বির ভাই, স্পিকার সিস্টেম সফলভাবে চালু হয়েছে।");
+            startMsg.rate = 1.0;
+            window.speechSynthesis.speak(startMsg);
+        </script>
+        """
+        st.markdown(start_js, unsafe_allow_html=True)
+        st.success("স্পিকার সক্রিয় হয়েছে!")
 
 # ভয়েস অ্যালার্ট ফাংশন
 def trigger_voice_alert(message):
@@ -116,8 +129,8 @@ def get_forex_data(symbol):
             change = ((price - prev_close) / prev_close) * 100
             
             base_sentiment = 50 + int(change * 15)
-            if base_sentiment > 72: buyer_pct = 72
-            elif base_sentiment < 28: buyer_pct = 28
+            if base_sentiment > 82: buyer_pct = 82
+            elif base_sentiment < 18: buyer_pct = 18
             else: buyer_pct = base_sentiment
             
             seller_pct = 100 - buyer_pct
@@ -174,9 +187,9 @@ def auto_dashboard():
                 
                 st.progress(float(buyer / 100.0))
                 
-                # স্মার্ট মানি সিগন্যাল ও ভয়েস অ্যালার্ট (সাথে রিটেল পার্সেন্টেজ যুক্ত করা হলো)
+                # স্মার্ট মানি সিগন্যাল ও ভয়েস অ্যালার্ট
                 if sm_color_tag == 'green':
-                    alert_text = f"সাব্বির ভাই! {display_name} পেয়ারে স্মার্ট মানি বাই এন্ট্রি নিয়েছে। বর্তমানে রিটেল ট্রেডারদের বায়ারে আছে {buyer} শতাংশ এবং সেலারে আছে {seller} শতাংশ।"
+                    alert_text = f"সাব্বির ভাই! {display_name} পেয়ারে স্মার্ট মানি বাই এন্ট্রি নিয়েছে। বর্তমানে রিটেল ট্রেডারদের বায়ারে আছে {buyer} শতাংশ এবং সেলার আছে {seller} শতাংশ।"
                     st.markdown(f'<div class="alert-buy">🟢 <b>স্মার্ট মানি বাই সিগন্যাল:</b> {display_name} পেয়ারে স্মার্ট মানি বাই এন্ট্রি নিয়েছে (রিটেল বায়ার: {buyer}%, সেলার: {seller}%)</div>', unsafe_allow_html=True)
                     trigger_voice_alert(alert_text)
                 else:
@@ -184,14 +197,14 @@ def auto_dashboard():
                     st.markdown(f'<div class="alert-sell">🔴 <b>স্মার্ট মানি সেল সিগন্যাল:</b> {display_name} পেয়ারে স্মার্ট মানি সেল এন্ট্রি নিয়েছে (রিটেল বায়ার: {buyer}%, সেলার: {seller}%)</div>', unsafe_allow_html=True)
                     trigger_voice_alert(alert_text)
                     
-                # সেন্টিমেন্ট বা ট্র্যাপ অ্যালার্ট
-                if buyer >= 70:
-                    trap_text = f"সাব্বির ভাই সতর্ক হোন! {display_name} পেয়ারে রিটেইল ট্রেডারদের বাই চাপ বেড়ে হয়েছে {buyer} শতাংশ!"
-                    st.markdown(f'<div class="alert-sell">⚠️ <b>সেন্টিমেন্ট ট্র্যাপ অ্যালার্ট:</b> রিটেল বাই চাপ অতিরিক্ত ({buyer}%)!</div>', unsafe_allow_html=True)
+                # রিটেল ট্রেডার ৮০% বা তার বেশি হলে বিশেষভাবে হুশিয়ার করার অ্যালার্ট
+                if buyer >= 80:
+                    trap_text = f"সাব্বির ভাই সতর্ক হোন! {display_name} পেয়ারে রিটেইল ট্রেডাররা আশি পার্সেন্টের বেশি অর্থাত্ {buyer} শতাংশ বাই এন্ট্রি নিয়ে ফেলেছে!"
+                    st.markdown(f'<div class="alert-sell">⚠️ <b>বিপদজনক সেন্টিমেন্ট ট্র্যাপ:</b> রিটেল বাই চাপ {buyer}% এর বেশি!</div>', unsafe_allow_html=True)
                     trigger_voice_alert(trap_text)
-                elif seller >= 70:
-                    trap_text = f"সাব্বির ভাই সতর্ক হোন! {display_name} পেয়ারে রিটেইল ট্রেডারদের সেল চাপ বেড়ে হয়েছে {seller} শতাংশ!"
-                    st.markdown(f'<div class="alert-sell">⚠️ <b>সেন্টিমেন্ট ট্র্যাপ অ্যালার্ট:</b> রিটেল সেল চাপ অতিরিক্ত ({seller}%)!</div>', unsafe_allow_html=True)
+                elif seller >= 80:
+                    trap_text = f"সাব্বির ভাই সতর্ক হোন! {display_name} পেয়ারে রিটেইল ট্রেডাররা আশি পার্সেন্টের বেশি অর্থাত্ {seller} শতাংশ সেল এন্ট্রি নিয়ে ফেলেছে!"
+                    st.markdown(f'<div class="alert-sell">⚠️ <b>বিপদজনক সেন্টিমেন্ট ট্র্যাপ:</b> রিটেল সেল চাপ {seller}% এর বেশি!</div>', unsafe_allow_html=True)
                     trigger_voice_alert(trap_text)
             else:
                 st.error(f"{display_name} এর ডেটা লোড করতে সমস্যা হচ্ছে।")
