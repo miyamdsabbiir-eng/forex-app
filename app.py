@@ -2,14 +2,14 @@ import datetime
 import pandas as pd
 import requests
 import streamlit as st
-
+from streamlit_autorefresh import st_autorefresh
 # ১. পেজ কনফিগারেশন
 st.set_page_config(
     page_title="Forex Traffic Light Signal Dashboard",
     page_icon="🚦",
     layout="wide",
 )
-
+st_autorefresh(interval=60000, key="market_signal_refresh")
 # ২. কাস্টম রঙিন ডিজাইন ও স্টাইল (CSS)
 st.markdown(
     """
