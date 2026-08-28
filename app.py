@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import requests
-import random
+import datetime
+
 # পেজ কনফিগারেশন
 st.set_page_config(
     page_title="Sabbir's Ultimate Pro Forex Dashboard",
@@ -68,10 +69,15 @@ st.markdown("""
 
 st.markdown('<div class="main-title">🚀 সাব্বির ভাইয়ের লট ও ডলার ভলিউম সেন্টিমেন্ট ড্যাশবোর্ড</div>', unsafe_allow_html=True)
 
-# কন্ট্রোল প্যানেল ও স্পিকার পারমিশন বাটন
+# কন্ট্রোল প্যানেল ও স্পিকার পারমিশন বাটন (সুইচ অফ-অন ফিক্সসহ)
 with st.sidebar:
     st.header("⚙️ কন্ট্রোল প্যানেল")
-    voice_on = st.toggle("🔊 স্পিকার ভয়েস অ্যালার্ট অন/অফ", value=True)
+    
+    if 'voice_active' not in st.session_state:
+        st.session_state.voice_active = True
+        
+    voice_on = st.toggle("🔊 স্পিকার ভয়েস অ্যালার্ট অন/অফ", value=st.session_state.voice_active, key="voice_toggle_btn")
+    st.session_state.voice_active = voice_on
     
     st.markdown("---")
     st.markdown("💡 **নির্দেশনা:**")
@@ -104,7 +110,7 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.metric(label="সিস্টেম স্ট্যাটাস", value="ফুল অটো মোড", delta="লাইভ রানিং")
 with col2:
-    st.metric(label="সেন্টিমেন্ট ফোকাস", value="শুধুমাত্র লট সাই ও ডলার ভলিউম")
+    st.metric(label="সেন্টিমেন্ট ফোকাস", value="শুধুমাত্র লট সাইজ ও ডলার ভলিউম")
 with col3:
     st.metric(label="স্পিকার ভয়েস", value="সক্রিয়" if voice_on else "বন্ধ", delta="🔊 On" if voice_on else "🔇 Off")
 
@@ -149,7 +155,8 @@ def get_forex_data(symbol):
 # ফুল অটো আপডেট ফ্রেমওয়ার্ক
 @st.fragment(run_every=60)
 def auto_dashboard():
-    st.caption(f"⏱️ সর্বশেষ আপডেট: {time.strftime('%I:%M:%S %p')} | সম্পূর্ণ সিস্টেম শুধু লট ও ডলার ভলিউম ট্র্যাক করছে...")
+    current_time = datetime.datetime.now().strftime('%I:%M:%S %p')
+    st.caption(f"⏱️ সর্বশেষ আপডেট: {current_time} | সম্পূর্ণ সিস্টেম শুধু লট ও ডলার ভলিউম ট্র্যাক করছে...")
     
     cols = st.columns(2)
     idx = 0
@@ -211,7 +218,3 @@ def auto_dashboard():
         idx += 1
 
 auto_dashboard()
-
-
-
-
