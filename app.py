@@ -1,220 +1,198 @@
-import streamlit as st
+import datetime
 import pandas as pd
 import requests
-import datetime
+import streamlit as st
 
-# পেজ কনফিগারেশন
+# ১. পেজ কনফিগারেশন
 st.set_page_config(
-    page_title="Sabbir's Ultimate Pro Forex Dashboard",
-    page_icon="📈",
-    layout="wide"
+    page_title="Forex Traffic Light Signal Dashboard",
+    page_icon="🚦",
+    layout="wide",
 )
 
-# স্টাইলিং: ব্যাকগ্রাউন্ড সাদা, লেখা শুধু লাল ও সবুজ, এবং কার্ডগুলো কালারফুল (কালো ছাড়া)
-st.markdown("""
+# ২. কাস্টম রঙিন ডিজাইন ও স্টাইল (CSS)
+st.markdown(
+    """
     <style>
-    .stApp { background-color: #ffffff; color: #000000; }
+    .main { background-color: #ffffff; color: #1f1f1f; }
+    .stApp { background-color: #ffffff; }
     
-    .main-title {
-        font-size: 26px;
-        font-weight: 800;
-        color: #059669;
-        text-align: center;
-        margin-bottom: 20px;
-    }
+    [data-testid="stSidebar"] { background-color: #e3f2fd; }
+    [data-testid="stSidebar"] h1, h2, h3 { color: #0d47a1; }
     
-    .card {
-        background: linear-gradient(135deg, #fef9c3 0%, #ecfdf5 100%);
-        padding: 20px;
-        border-radius: 16px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-        margin-bottom: 15px;
-        border: 2px solid #fde047;
-    }
+    .stMetric { background-color: #f5f5f5; padding: 15px; border-radius: 10px; border: 2px solid #90caf9; color: #000000; }
     
-    .alert-buy {
-        background-color: #ecfdf5;
-        padding: 14px;
-        border-radius: 12px;
-        border-left: 6px solid #10b981;
-        margin-bottom: 10px;
-        color: #059669;
-        font-weight: 700;
-    }
-    
-    .alert-sell {
-        background-color: #fef2f2;
-        padding: 14px;
-        border-radius: 12px;
-        border-left: 6px solid #ef4444;
-        margin-bottom: 10px;
-        color: #dc2626;
-        font-weight: 700;
-    }
-    
-    .pair-title { color: #1e3a8a; font-size: 20px; font-weight: 700; }
-    
-    .stProgress > div > div > div > div {
-        height: 14px !important;
-        border-radius: 8px !important;
-        background: linear-gradient(90deg, #10b981, #ef4444);
-    }
-    .stProgress > div > div > div {
-        height: 14px !important;
-        border-radius: 8px !important;
-        background-color: #fef08a !important;
-    }
+    h1 { color: #0d47a1 !important; text-align: center; }
+    h3 { color: #1976d2 !important; }
+
+    .signal-box { padding: 18px; border-radius: 10px; margin-bottom: 10px; font-weight: bold; text-align: center; font-size: 16px; }
+    .buy-signal { background-color: #e8f5e9; color: #2e7d32; border: 2px solid #66bb6a; }
+    .sell-signal { background-color: #ffebee; color: #c62828; border: 2px solid #ef5350; }
+    .wait-signal { background-color: #fffde7; color: #f9a825; border: 2px solid #ffee58; }
     </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-st.markdown('<div class="main-title">🚀 সাব্বির ভাইয়ের লট ও ডলার ভলিউম সেন্টিমেন্ট ড্যাশবোর্ড</div>', unsafe_allow_html=True)
-
-# কন্ট্রোল প্যানেল ও স্পিকার পারমিশন বাটন (সুইচ অফ-অন ফিক্সসহ)
+# ৩. সাইডবার কনফিগারেশন
 with st.sidebar:
-    st.header("⚙️ কন্ট্রোল প্যানেল")
-    
-    if 'voice_active' not in st.session_state:
-        st.session_state.voice_active = True
-        
-    voice_on = st.toggle("🔊 স্পিকার ভয়েস অ্যালার্ট অন/অফ", value=st.session_state.voice_active, key="voice_toggle_btn")
-    st.session_state.voice_active = voice_on
-    
-    st.markdown("---")
-    st.markdown("💡 **নির্দেশনা:**")
-    if st.button("🔊 স্পিকার ভয়েস চালু করুন"):
-        start_js = """
-        <script>
-            var startMsg = new SpeechSynthesisUtterance("সাব্বির ভাই, স্পিকার সিস্টেম সফলভাবে চালু হয়েছে।");
-            startMsg.rate = 1.0;
-            window.speechSynthesis.speak(startMsg);
-        </script>
-        """
-        st.markdown(start_js, unsafe_allow_html=True)
-        st.success("স্পিকার সক্রিয় হয়েছে!")
+    st.header("🚦 ট্রাফিক লাইট সিগন্যাল কন্ট্রোল")
+    account_balance = st.number_input(
+        "আপনার মোট ব্যালেন্স ($)", min_value=10.0, value=100.0, step=10.0
+    )
+    st.markdown("""
+    * **🟢 সবুজ:** শতভাগ ভরসা নিয়ে **বাই (Buy)** নিন।
+    * **🔴 লাল:** আত্মবিশ্বাসের সাথে **সেল (Sell)** নিন।
+    * **🟡 হলুদ:** মার্কেট ঝুঁকিপূর্ণ, **ট্রেড নেওয়া নিষেধ** (অপেক্ষা করুন)।
+    """)
 
-# ভয়েস অ্যালার্ট ফাংশন
-def trigger_voice_alert(message):
-    if voice_on:
-        js_code = f"""
-        <script>
-            var msg = new SpeechSynthesisUtterance("{message}");
-            msg.rate = 1.0;
-            msg.pitch = 1.0;
-            window.speechSynthesis.speak(msg);
-        </script>
-        """
-        st.markdown(js_code, unsafe_allow_html=True)
+st.title("🚦 ফরেক্স ট্রাফিক লাইট সিগন্যাল ড্যাশবোর্ড")
+st.write(
+    "রং দেখে সিদ্ধান্ত নিন: সবুজ = বাই, লাল = সেল, হলুদ = নিরাপদ দূরত্বে থাকুন।"
+)
 
-# টপ স্ট্যাটাস বার
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric(label="সিস্টেম স্ট্যাটাস", value="ফুল অটো মোড", delta="লাইভ রানিং")
-with col2:
-    st.metric(label="সেন্টিমেন্ট ফোকাস", value="শুধুমাত্র লট সাইজ ও ডলার ভলিউম")
-with col3:
-    st.metric(label="স্পিকার ভয়েস", value="সক্রিয়" if voice_on else "বন্ধ", delta="🔊 On" if voice_on else "🔇 Off")
 
-st.markdown("---")
+# ৪. ডেটা ফেচিং ও ফিল্টার ফাংশন
+def get_traffic_signal_data(symbol):
+  try:
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1m&range=1h"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(url, headers=headers)
+    data = response.json()
 
-symbols = ["EURUSD=X", "GBPUSD=X", "USDJPY=X", "USDCAD=X", "AUDUSD=X"]
+    result = data["chart"]["result"][0]
+    meta = result["meta"]
+    current_price = meta["regularMarketPrice"]
+    previous_close = meta["chartPreviousClose"]
 
-# মূল ডেটা এবং শুধুমাত্র লট/ডলার ভলিউম ক্যালকুলেশন ফাংশন
-def get_forex_data(symbol):
-    try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1m"
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(url, headers=headers, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            result = data['chart']['result'][0]
-            meta = result['meta']
-            price = meta['regularMarketPrice']
-            prev_close = meta['chartPreviousClose']
-            change = ((price - prev_close) / prev_close) * 100
-            
-            # শুধুমাত্র লট সাইজ ও ক্যাপিটাল ফ্লো ওয়েট লজিক
-            base_flow = 50 + int(change * 22)
-            if base_flow > 88: lot_buyer_pct = 88
-            elif base_flow < 12: lot_buyer_pct = 12
-            else: lot_buyer_pct = base_flow
-            
-            lot_seller_pct = 100 - lot_buyer_pct
-            
-            if change >= 0:
-                sm_direction = "BUY (Institutional Bullish Trend)"
-                sm_color_tag = "green"
-            else:
-                sm_direction = "SELL (Institutional Bearish Trend)"
-                sm_color_tag = "red"
-                
-            return price, lot_buyer_pct, lot_seller_pct, sm_direction, sm_color_tag, change
-    except Exception as e:
-        pass
-    return None, 50, 50, "Neutral", "gray", 0.0
+    price_change = current_price - previous_close
+    percent_change = (price_change / previous_close) * 100
 
-# ফুল অটো আপডেট ফ্রেমওয়ার্ক
+    timestamps = result["timestamp"]
+    quotes = result["indicators"]["quote"][0]["close"]
+
+    df = pd.DataFrame({"time": timestamps, "close": quotes})
+    df = df.dropna()
+
+    if len(df) > 14:
+      delta = df["close"].diff()
+      gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+      loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+      rs = gain / loss
+      rsi = 100 - (100 / (1 + rs))
+      current_rsi = rsi.iloc[-1]
+
+      ema_20 = df["close"].ewm(span=20, adjust=False).mean().iloc[-1]
+      recent_trend = df["close"].iloc[-1] - df["close"].iloc[-3]
+      volatility = df["close"].pct_change().std() * 100
+    else:
+      current_rsi = 50.0
+      ema_20 = current_price
+      recent_trend = 0
+      volatility = 0.1
+
+    return (
+        current_price,
+        percent_change,
+        current_rsi,
+        ema_20,
+        recent_trend,
+        volatility,
+        "Success",
+    )
+  except Exception as e:
+    return 0.0, 0.0, 50.0, 0.0, 0, 0.1, str(e)
+
+
+# ৫. পেয়ারের তালিকা
+symbols = {
+    "EUR/USD": "EURUSD=X",
+    "GBP/USD": "GBPUSD=X",
+    "USD/JPY": "USDJPY=X",
+    "AUD/USD": "AUDUSD=X",
+}
+
+st.subheader("📊 লাইভ মার্কেট ট্রাফিক সিগন্যাল প্যানেল")
+
+# অটো রিফ্রেশ লজিক
 @st.fragment(run_every=60)
-def auto_dashboard():
-    current_time = datetime.datetime.now().strftime('%I:%M:%S %p')
-    st.caption(f"⏱️ সর্বশেষ আপডেট: {current_time} | সম্পূর্ণ সিস্টেম শুধু লট ও ডলার ভলিউম ট্র্যাক করছে...")
-    
-    cols = st.columns(2)
-    idx = 0
-    
-    for sym in symbols:
-        if sym == "EURUSD=X": display_name = "EUR/USD"
-        elif sym == "GBPUSD=X": display_name = "GBP/USD"
-        elif sym == "USDJPY=X": display_name = "USD/JPY"
-        elif sym == "USDCAD=X": display_name = "USD/CAD"
-        elif sym == "AUDUSD=X": display_name = "AUD/USD"
+def render_dashboard():
+  current_time = datetime.datetime.now().strftime("%I:%M:%S %p")
+  st.caption(f"🔄 সর্বশেষ আপডেট: {current_time} (প্রতি ৬০ সেকেন্ডে অটো-আপডেট)")
 
-        price, l_buyer, l_seller, sm_direction, sm_color_tag, change = get_forex_data(sym)
-        
-        with cols[idx % 2]:
-            if price is not None:
-                price_color = "#059669" if change >= 0 else "#dc2626"
-                dir_color = "#059669" if sm_color_tag == 'green' else "#dc2626"
-                
-                st.markdown(f"""
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span class="pair-title">{display_name}</span>
-                        <span style="color: {price_color}; font-size: 19px; font-weight: 800;">{price:.4f}</span>
-                    </div>
-                    <div style="margin-top: 8px; font-size: 14px; font-weight: 700; color: {price_color};">মার্কেট পরিবর্তন: {change:+.2f}%</div>
-                    <div style="margin-top: 8px; font-size: 14px; font-weight: 700; color: {dir_color};">স্মার্ট মানি ডিরেকশন: {sm_direction}</div>
-                    <div style="margin-top: 10px; font-size: 14px; font-weight: 700; color: #1e293b;">
-                        📊 রিটেল লট ও ডলার ভলিউম: 
-                        <span style="color: #059669;">বায়ার {l_buyer}%</span> &nbsp;|&nbsp; 
-                        <span style="color: #dc2626;">সেলার {l_seller}%</span>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # প্রোগ্রেসবারে লট/ডলার ভলিউম বায়ার পার্সেন্টেজ দেখানো হচ্ছে
-                st.progress(float(l_buyer / 100.0))
-                
-                # স্মার্ট মানি সিগন্যাল ও ভয়েস অ্যালার্ট
-                if sm_color_tag == 'green':
-                    alert_text = f"সাব্বির ভাই! {display_name} পেয়ারে স্মার্ট মানি বাই এন্ট্রি নিয়েছে। বর্তমানে রিটেলদের মোট লট ও ডলার ভলিউমে বায়ার আছে {l_buyer} শতাংশ এবং সেলার রয়েছে {l_seller} শতাংশ।"
-                    st.markdown(f'<div class="alert-buy">🟢 <b>স্মার্ট মানি বাই সিগন্যাল:</b> {display_name} পেয়ারে স্মার্ট মানি বাই এন্ট্রি নিয়েছে (লট বায়ার: {l_buyer}%, সেলার: {l_seller}%)</div>', unsafe_allow_html=True)
-                    trigger_voice_alert(alert_text)
-                else:
-                    alert_text = f"সাব্বির ভাই! {display_name} পেয়ারে স্মার্ট মানি সেল এন্ট্রি নিয়েছে। বর্তমানে রিটেলদের মোট লট ও ডলার ভলিউমে বায়ার আছে {l_buyer} শতাংশ এবং সেলার রয়েছে {l_seller} শতাংশ।"
-                    st.markdown(f'<div class="alert-sell">🔴 <b>স্মার্ট মানি সেল সিগন্যাল:</b> {display_name} পেয়ারে স্মার্ট মানি সেল এন্ট্রি নিয়েছে (লট বায়ার: {l_buyer}%, সেলার: {l_seller}%)</div>', unsafe_allow_html=True)
-                    trigger_voice_alert(alert_text)
-                    
-                # লট বা ডলার ভলিউম ৮০% বা তার বেশি হলে বিশেষভাবে হুশিয়ার করার ট্র্যাপ অ্যালার্ট
-                if l_buyer >= 80:
-                    trap_text = f"সাব্বির ভাই চরম সতর্ক হোন! {display_name} পেয়ারে রিটেইলদের লট বা ডলার ভলিউম আশি পার্সেন্টের বেশি অর্থাত্ {l_buyer} শতাংশ বাই এন্ট্রি লক করে ফেলেছে!"
-                    st.markdown(f'<div class="alert-sell">⚠️ <b>বিপদজনক লট ট্র্যাপ জোন:</b> রিটেল বাই ভলিউম {l_buyer}% অতিক্রম করেছে!</div>', unsafe_allow_html=True)
-                    trigger_voice_alert(trap_text)
-                elif l_seller >= 80:
-                    trap_text = f"সাব্বির ভাই চরম সতর্ক হোন! {display_name} পেয়ারে রিটেইলদের লট বা ডলার ভলিউম আশি পার্সেন্টের বেশি অর্থাত্ {l_seller} শতাংশ সেল এন্ট্রি লক করে ফেলেছে!"
-                    st.markdown(f'<div class="alert-sell">⚠️ <b>বিপদজনক লট ট্র্যাপ জোন:</b> রিটেল সেল ভলিউম {l_seller}% অতিক্রম করেছে!</div>', unsafe_allow_html=True)
-                    trigger_voice_alert(trap_text)
-            else:
-                st.error(f"{display_name} এর ডেটা লোড করতে সমস্যা হচ্ছে।")
-        idx += 1
+  for name, symbol in symbols.items():
+    (
+        price,
+        change,
+        rsi,
+        ema,
+        trend,
+        volatility,
+        status,
+    ) = get_traffic_signal_data(symbol)
 
-auto_dashboard()
+    if status == "Success":
+      # ডাইনামিক লট সাইজ হিসাব
+      base_lot = (account_balance / 1000) * 0.1
+      if volatility < 0.05:
+        dynamic_lot = round(max(0.01, base_lot * 1.5), 2)
+      elif volatility > 0.15:
+        dynamic_lot = 0.01
+      else:
+        dynamic_lot = round(max(0.01, base_lot), 2)
+
+      if dynamic_lot > 0.3:
+        dynamic_lot = 0.3
+
+      col1, col2, col3 = st.columns([2, 2, 3])
+
+      with col1:
+        st.metric(
+            label=name,
+            value=f"{price:.4f}",
+            delta=f"{change:.2f}%",
+        )
+
+      with col2:
+        st.metric(
+            label="টেকনিক্যাল অবস্থা",
+            value=f"RSI: {rsi:.1f}",
+            delta=f"EMA: {ema:.4f}",
+        )
+
+      with col3:
+        # ট্রাফিক লাইট লজিক
+        if rsi < 38 and price >= ema and trend >= 0:
+          signal_html = f"""
+                    <div class="signal-box buy-signal">
+                        🟢 বাই (Buy) নিন - সবুজ সংকেত!<br>
+                        <span style="font-size: 13px; color: #1b5e20;">ভরসা করে বাই ধরতে পারেন • লট: <b>{dynamic_lot}</b></span>
+                    </div>
+                    """
+        elif rsi > 62 and price <= ema and trend <= 0:
+          signal_html = f"""
+                    <div class="signal-box sell-signal">
+                        🔴 সেল (Sell) নিন - লাল সংকেত!<br>
+                        <span style="font-size: 13px; color: #b71c1c;">ভরসা করে সেল ধরতে পারেন • লট: <b>{dynamic_lot}</b></span>
+                    </div>
+                    """
+        else:
+          signal_html = """
+                    <div class="signal-box wait-signal">
+                        🟡 ট্রেড নিষিদ্ধ - হলুদ সংকেত!<br>
+                        <span style="font-size: 13px; color: #f57f17;">মার্কেট ঝুঁকিপূর্ণ, এখন কোনো ট্রেড নেবেন না</span>
+                    </div>
+                    """
+
+        st.markdown(signal_html, unsafe_allow_html=True)
+
+      st.markdown("---")
+    else:
+      st.error(f"{name} এর ডেটা আনতে সমস্যা হচ্ছে।")
+
+
+# রেন্ডার কল
+render_dashboard()
+
+
+
