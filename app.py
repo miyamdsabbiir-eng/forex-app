@@ -7,14 +7,14 @@ from streamlit_autorefresh import st_autorefresh
 
 # ১. পেজ কনফিগারেশন
 st.set_page_config(
-    page_title="Forex Traffic Light Signal Dashboard",
+    page_title="Smart Money Crypto & Forex Dashboard",
     page_icon="🚦",
     layout="wide",
 )
 
 st_autorefresh(interval=60000, key="market_signal_refresh")
 
-# ২. কাস্টম রঙিন ডিজাইন ও স্টাইল (CSS)
+# ২. কাস্টম ডিজাইন ও স্পিকার সাউন্ড অ্যালার্ট স্ক্রিপ্ট
 st.markdown(
     """
     <style>
@@ -22,12 +22,31 @@ st.markdown(
     .stApp { background-color: #ffffff; }
     [data-testid="stSidebar"] { background-color: #e3f2fd; }
     </style>
+    
+    <script>
+    function playAlertSound() {
+        var audio = new Audio('https://commondatastorage.googleapis.com/codesign-playground.appspot.com/beep-07.mp3');
+        audio.play().catch(function(error) {
+            console.log("Audio play blocked: ", error);
+        });
+    }
+    </script>
     """,
     unsafe_allow_html=True,
 )
 
 # ৩. সাইডবার কনফিগারেশন
-st.sidebar.header("⚙️ সেটিংস ও অ্যাকাউন্ট")
+st.sidebar.header("⚙️ সেটিংস ও কন্ট্রোল প্যানেল")
+
+timeframe_option = st.sidebar.selectbox(
+    "📊 টাইমফ্রেম সিলেক্ট করুন",
+    options=["15m", "1h", "2h", "4h", "1d"],
+    index=3
+)
+
+sound_alert_enabled = st.sidebar.checkbox("🔊 স্পিকার সাউন্ড অ্যালার্ট চালু রাখুন", value=True)
+
+st.sidebar.markdown("---")
 account_balance = st.sidebar.number_input(
     "অ্যাকাউন্ট ব্যালেন্স (USD)", min_value=10.0, value=1000.0, step=50.0
 )
@@ -36,35 +55,34 @@ risk_percentage = st.sidebar.slider(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("🔊 সাউন্ড কন্ট্রোল")
-# স্পিকার অন/অফ করার টিক বক্স (Checkbox)
-sound_enabled = st.sidebar.checkbox("🔊 স্পিকার অ্যালার্ট অন রাখুন", value=True)
+st.sidebar.subheader("🚨 ট্রাফিক লাইট ও স্মার্ট মানি নির্দেশিকা")
+st.sidebar.markdown("🟢 **সবুজ লাইট:** স্মার্ট মানি লং (Buy) পজিশনে রয়েছে।")
+st.sidebar.markdown("🔴 **লাল লাইট:** স্মার্ট মানি শর্ট (Sell) পজিশনে রয়েছে।")
+st.sidebar.markdown("🟡 **হলুদ লাইট:** স্মার্ট মানি কনসোলিডেশনে, এন্ট্রি নিষেধ।")
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("🚨 ট্রাফিক লাইট সংকেত নির্দেশিকা")
-st.sidebar.markdown(
-    "🟢 **সবুজ লাইট (বাই):** ট্রেন্ড ঊর্ধ্বমুখী, লং পজিশন নেওয়ার উপযুক্ত সময়।"
-)
-st.sidebar.markdown(
-    "🔴 **লাল লাইট (সেল):** ট্রেন্ড নিম্নমুখী, শর্ট পজিশন নেওয়ার সময়।"
-)
-st.sidebar.markdown(
-    "🟡 **হলুদ লাইট (অপেক্ষা করুন):** মার্কেট সাইডওয়েজ বা অস্থির, নিরাপদ দূরত্বে থাকুন।"
-)
-
-st.title("🚦 ফরেক্স ট্রাফিক লাইট সিগন্যাল ড্যাশবোর্ড")
+st.title("🚦 ক্রিপ্টো ও ফরেক্স স্মার্ট মানি ট্রাফিক সিগন্যাল ড্যাশবোর্ড")
 st.write(
-    "রং দেখে সিদ্ধান্ত নিন: সবুজ = বাই, লাল = সেল, হলুদ = নিরাপদ দূরত্বে থাকুন।"
+    f"নির্বাচিত টাইমফ্রেম: **{timeframe_option}** | বিটকয়েনসহ প্রধান পেয়ারগুলোর ইনস্টিটিউশনাল ফ্লো ট্র্যাক করা হচ্ছে।"
 )
 
-# ৮. ডেটা ফেচিং ও ফিল্টার ফাংশন
-def get_traffic_signal_data(symbol):
+# ৪. ডেটা ফেচিং এবং স্মার্ট মানি স্ট্রাকচার ফিল্টার ফাংশন
+def get_traffic_signal_data(symbol, timeframe):
     try:
         ticker = yf.Ticker(symbol)
-        df = ticker.history(period="1d", interval="1m")
         
-        if df.empty or len(df) < 14:
-            return 0.0, 0.0, 50.0, 0.0, 0, 0.1, "Error"
+        period_map = {
+            "15m": "7d",
+            "1h": "30d",
+            "2h": "60d",
+            "4h": "60d",
+            "1d": "1y"
+        }
+        period = period_map.get(timeframe, "60d")
+        
+        df = ticker.history(period=period, interval=timeframe)
+        
+        if df.empty or len(df) < 50:
+            return 0.0, 0.0, 50.0, 0.0, 0, 0, "NEUTRAL", 0.1, "Error"
             
         current_price = float(df["Close"].iloc[-1])
         previous_close = float(df["Open"].iloc[0])
@@ -80,11 +98,25 @@ def get_traffic_signal_data(symbol):
         rsi = 100 - (100 / (1 + rs))
         current_rsi = float(rsi.iloc[-1])
         
-        # EMA হিসাব
+        # মুভিং এভারেজ (EMA 20, 50, 200)
         ema_20 = float(df["Close"].ewm(span=20, adjust=False).mean().iloc[-1])
+        ema_50 = float(df["Close"].ewm(span=50, adjust=False).mean().iloc[-1])
+        ema_200 = float(df["Close"].ewm(span=200, adjust=False).mean().iloc[-1])
         
-        # ট্রেন্ড এবং ভোলাটিলিটি
-        recent_trend = int(df["Close"].iloc[-1] > df["Close"].iloc[-3])
+        # স্মার্ট মানি ডিরেকশন ডিটেকশন
+        if current_price > ema_50 and ema_20 > ema_50 and ema_50 > ema_200:
+            smart_money_status = "BULLISH (BUY)"
+            trend_up = 1
+            trend_down = 0
+        elif current_price < ema_50 and ema_20 < ema_50 and ema_50 < ema_200:
+            smart_money_status = "BEARISH (SELL)"
+            trend_up = 0
+            trend_down = 1
+        else:
+            smart_money_status = "ACCUMULATION / MANIPULATION (WAIT)"
+            trend_up = 0
+            trend_down = 0
+        
         volatility = float(df["Close"].pct_change().std() * 100)
         if pd.isna(volatility):
             volatility = 0.1
@@ -93,27 +125,29 @@ def get_traffic_signal_data(symbol):
             current_price,
             percent_change,
             current_rsi,
-            ema_20,
-            recent_trend,
+            ema_50,
+            trend_up,
+            trend_down,
+            smart_money_status,
             volatility,
             "Success",
         )
     except Exception as e:
-        return 0.0, 0.0, 50.0, 0.0, 0, 0.1, str(e)
+        return 0.0, 0.0, 50.0, 0.0, 0, 0, "ERROR", 0.1, str(e)
 
-# ৫. পেয়ারের তালিকা
+# ৫. পেয়ার ও ক্রিপ্টোর তালিকা (এখানে বিটকয়েন যুক্ত করা হয়েছে)
 symbols = {
+    "Bitcoin (BTC/USD)": "BTC-USD",
     "EUR/USD": "EURUSD=X",
     "GBP/USD": "GBPUSD=X",
     "USD/JPY": "USDJPY=X",
     "AUD/USD": "AUDUSD=X",
 }
 
-st.subheader("📊 লাইভ মার্কেট ট্রাফিক সিগন্যাল প্যানেল")
+st.subheader(f"📊 লাইভ স্মার্ট মানি ট্র্যাকিং প্যানেল ({timeframe_option})")
 
-# অটো রিফ্রেশ লজিক
 current_time = datetime.datetime.now().strftime("%I:%M:%S %p")
-st.caption(f"🔄 সর্বশেষ আপডেট: {current_time} (প্রতি ৬০ সেকেন্ডে অটো-আপডেট)")
+st.caption(f"🔄 সর্বশেষ আপডেট: {current_time} (প্রতি ৬০ সেকেন্ডে অটো-চেক)")
 
 for name, symbol in symbols.items():
     (
@@ -121,13 +155,14 @@ for name, symbol in symbols.items():
         change,
         rsi,
         ema,
-        trend,
+        trend_up,
+        trend_down,
+        smart_money,
         volatility,
         status,
-    ) = get_traffic_signal_data(symbol)
+    ) = get_traffic_signal_data(symbol, timeframe_option)
 
     if status == "Success":
-        # ডাইনামিক লট সাইজ হিসাব
         base_lot = (account_balance / 1000) * 0.1
         if volatility < 0.05:
             dynamic_lot = round(max(0.01, base_lot * 1.5), 2)
@@ -144,37 +179,35 @@ for name, symbol in symbols.items():
         with col1:
             st.metric(
                 label=name,
-                value=f"{price:.4f}",
+                value=f"{price:,.2f}" if "BTC" in name else f"{price:.4f}",
                 delta=f"{change:.2f}%",
             )
 
         with col2:
             st.metric(
-                label="টেকনিক্যাল অবস্থা",
-                value=f"RSI: {rsi:.1f}",
-                delta=f"EMA: {ema:.4f}",
+                label=f"স্মার্ট মানি স্ট্যাটাস",
+                value=f"{smart_money}",
+                delta=f"RSI: {rsi:.1f}",
             )
 
         with col3:
-            # ট্রাফিক লাইট লজিক
-            if rsi < 38 and price >= ema and trend >= 0:
-                st.success("🟢 সংকেত: BUY (বাজেট ঝুঁকি অনুযায়ী লং করুন)")
-                st.info(f"💡 প্রস্তাবিত লট সাইজ: {dynamic_lot} Lots")
+            if trend_up == 1 and rsi >= 45 and rsi <= 70:
+                st.success(f"🟢 সংকেত: BUY (স্মার্ট মানির অনুকূলে লং)")
+                st.info(f"💡 প্রস্তাবিত লট: {dynamic_lot} Lots")
                 
-                # যদি স্পিকার অন থাকে, তবে ব্রাউজারে বীপ সাউন্ড বাজানোর ছোট্ট এইচটিএমএল কোড রান করবে
-                if sound_enabled:
-                    st.markdown('<audio src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" autoplay></audio>', unsafe_allow_html=True)
-
-            elif rsi > 62 and price <= ema and trend <= 0:
-                st.error("🔴 সংকেত: SELL (শর্ট পজিশন নিন)")
-                st.info(f"💡 প্রস্তাবিত লট সাইজ: {dynamic_lot} Lots")
+                if sound_alert_enabled:
+                    st.markdown('<script>playAlertSound();</script>', unsafe_allow_html=True)
+                    
+            elif trend_down == 1 and rsi <= 55 and rsi >= 30:
+                st.error(f"🔴 সংকেত: SELL (স্মার্ট মানির অনুকূলে শর্ট)")
+                st.info(f"💡 প্রস্তাবিত লট: {dynamic_lot} Lots")
                 
-                if sound_enabled:
-                    st.markdown('<audio src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" autoplay></audio>', unsafe_allow_html=True)
-
+                if sound_alert_enabled:
+                    st.markdown('<script>playAlertSound();</script>', unsafe_allow_html=True)
+                    
             else:
-                st.warning("🟡 সংকেত: WAIT (অপেক্ষা করুন, এন্ট্রি অনুপযুক্ত)")
-                st.info("💡 নিরাপদ থাকুন, ট্রেড থেকে বিরত থাকুন")
+                st.warning("🟡 সংকেত: WAIT (ফেক জোন / ম্যানিপুলেশন চলছে)")
+                st.info("💡 স্মার্ট মানি কনফার্মেশন না পাওয়া পর্যন্ত অপেক্ষা করুন")
     else:
         st.error(f"{name} এর ডেটা আনতে সমস্যা হচ্ছে।")
 
