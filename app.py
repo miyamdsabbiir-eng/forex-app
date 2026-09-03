@@ -178,9 +178,10 @@ for name, symbol in assets.items():
                         st.error(f"🔴 **SELL** | R:{rsi:.0f} | SL:{sl:.4f} | TP:{tp:.4f}")
                     signal_triggered = True
                 else:
-                    st.warning(f"🟡 **WAIT** | R:{rsi:.0f}")
+st.warning(f"🟡 **WAIT** | R:{rsi:.0f}")
                     
-        st.markdown('</div>', unsafe_allow_html=Type if 'Type' in globals() else 'div') # safer block closure
+        st.markdown('</div>', unsafe_allow_html=True)
 
 if signal_triggered and sound_alert_enabled:
     st.markdown('<script>playAlertSound();</script>', unsafe_allow_html=True)
+                    
