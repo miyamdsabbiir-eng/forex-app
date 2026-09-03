@@ -2,14 +2,14 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import datetime
-# পৃষ্ঠার কনফিগারেশন এবং প্রিমিয়াম লুক
+# পৃষ্ঠার কনফিগারেশন
 st.set_page_config(
     page_title="Smart Money Trading Pro",
     page_icon="⚡",
     layout="wide"
 )
 
-# কাস্টম CSS স্টাইল
+# কাস্টম CSS স্টাইল (ডটগুলোকে অক্ষরের মতো একদম কাছাকাছি রাখার জন্য)
 st.markdown("""
 <style>
     .main-header {
@@ -27,11 +27,20 @@ st.markdown("""
     }
     .card {
         background-color: #1E1E2F;
-        padding: 12px;
+        padding: 12px 15px;
         border-radius: 10px;
         border: 1px solid #2A2A40;
         margin-bottom: 12px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    .dots-row {
+        display: flex;
+        gap: 6px; /* অক্ষরের মতো একদম কাছাকাছি রাখার জন্য গ্যাপ কমানো হয়েছে */
+        align-items: center;
+        margin-top: 8px;
+    }
+    .dot-item {
+        font-size: 1.4rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -45,23 +54,14 @@ function playAlertSound() {
 </script>
 """, unsafe_allow_html=True)
 
-# সাইডবার ডিজাইন
+# সাইডবার
 st.sidebar.markdown("## ⚙️ কন্ট্রোল প্যানেল")
-st.sidebar.info("📢 **বিজ্ঞাপন শর্ত:**\nঅ্যাপটি সম্পূর্ণ ফ্রি। নিয়ম অনুযায়ী প্রতি **২৪ ঘণ্টায় কমপক্ষে ১টি অ্যাড** দেখতে হবে।")
-
 sound_alert_enabled = st.sidebar.toggle("🔊 স্পিকার সাউন্ড অ্যালার্ট", value=True)
 st.sidebar.markdown("---")
 account_balance = st.sidebar.number_input("অ্যাকাউন্ট ব্যালেন্স (USD)", min_value=10.0, value=1000.0, step=50.0)
 
-# টাইমফ্রেমের সংক্ষিপ্ত নাম
-timeframe_display = {
-    "15m": "১৫ মি.",
-    "30m": "৩০ মি.",
-    "1h": "১ ঘ.",
-    "2h": "২ ঘ.",
-    "4h": "৪ ঘ.",
-    "1d": "১ দিন"
-}
+# টাইমফ্রেমগুলোর তালিকা (১৫মি, ৩০মি, ১ঘ, ২ঘ, ৪ঘ, ১দিন)
+timeframes = ["15m", "30m", "1h", "2h", "4h", "1d"]
 
 def analyze_signal(symbol, timeframe):
     try:
@@ -118,10 +118,10 @@ def analyze_signal(symbol, timeframe):
     except Exception as e:
         return "WAIT", 0.0, 50.0, 0.0, 0.0
 
-# প্রধান শিরোনাম
+# হেডার
 st.markdown('<p class="main-header">⚡ স্মার্ট মানি ট্রেডিং প্রো</p>', unsafe_allow_html=True)
 current_time = datetime.datetime.now().strftime("%I:%M:%S %p")
-st.markdown(f'<p class="sub-caption">🔄 লাইভ আপডেট (Single Line Mode): {current_time}</p>', unsafe_allow_html=True)
+st.markdown(f'<p class="sub-caption">🔄 লাইভ আপডেট (Ultra-Tight Mode): {current_time}</p>', unsafe_allow_html=True)
 st.markdown("---")
 
 market_view = st.radio(
@@ -154,39 +154,22 @@ for name, symbol in assets.items():
         st.markdown(f'<div class="card">', unsafe_allow_html=True)
         st.markdown(f"##### 🏷️ {name}")
         
-        # টাইমফ্রেমের জন্য ৬টি কলাম
-        cols = st.columns(6)
-        
-        for i, (tf_key, tf_name) in enumerate(timeframe_display.items()):
+        dots_html = '<div class="dots-row">'
+        for tf_key in timeframes:
             status, price, rsi, sl, tp = analyze_signal(symbol, tf_key)
             
-            with cols[i]:
-                st.markdown(f"**{tf_name}**")
-                is_gc_crypto = "Gold" in name or "BTC" in name or "ETH" in name
-                
-                # সব তথ্য এক লাইনে (Single Line Formatting)
-                if status == "BUY":
-                    if is_gc_crypto:
-                        st.success(f"🟢 **BUY** | R:{rsi:.0f} | SL:${sl:,.0f} | TP:${tp:,.0f}")
-                    else:
-                        st.success(f"🟢 **BUY** | R:{rsi:.0f} | SL:{sl:.4f} | TP:{tp:.4f}")
-                    signal_triggered = True
-                elif status == "SELL":
-                    if is_gc_crypto:
-                        st.error(f"🔴 **SELL** | R:{rsi:.0f} | SL:${sl:,.0f} | TP:${tp:,.0f}")
-                    else:
-                        st.error(f"🔴 **SELL** | R:{rsi:.0f} | SL:{sl:.4f} | TP:{tp:.4f}")
-                        signal_triggered = True
-        elif status == "SELL":
-            if is_gc_crypto:
-                st.error(f"🔴 **SELL** | R:{rsi:.0f} | SL:${sl:,.0f} | TP:${tp:,.0f}")
+            if status == "BUY":
+                dots_html += '<span class="dot-item">🟢</span>'
+                signal_triggered = True
+            elif status == "SELL":
+                dots_html += '<span class="dot-item">🔴</span>'
+                signal_triggered = True
             else:
-                st.error(f"🔴 **SELL** | R:{rsi:.0f} | SL:{sl:.4f} | TP:{tp:.4f}")
-            signal_triggered = True
-        else:
-            st.warning(f"🟡 **WAIT** | R:{rsi:.0f}")
-            
-st.markdown('</div>', unsafe_allow_html=True)
+                dots_html += '<span class="dot-item">🟡</span>'
+                
+        dots_html += '</div>'
+        st.markdown(dots_html, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 if signal_triggered and sound_alert_enabled:
     st.markdown('<script>playAlertSound();</script>', unsafe_allow_html=True)
