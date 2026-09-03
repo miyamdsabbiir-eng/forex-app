@@ -78,12 +78,11 @@ def analyze_signal(symbol, timeframe):
         
         df = ticker.history(period=period, interval=timeframe)
         
-        if df.empty or len(df) < 30:
+        if df.empty or len(df) < 20:
             return "WAIT", 0.0, 50.0, 0.0, 0.0
             
         current_price = float(df["Close"].iloc[-1])
         
-        # RSI ক্যালকুলেশন
         delta = df["Close"].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
@@ -91,7 +90,6 @@ def analyze_signal(symbol, timeframe):
         rsi_series = 100 - (100 / (1 + rs))
         rsi = float(rsi_series.iloc[-1]) if not rsi_series.empty and not pd.isna(rsi_series.iloc[-1]) else 50.0
         
-        # মুভিং এভারেজ (EMA 20 এবং EMA 50)
         ema_20 = float(df["Close"].ewm(span=20, adjust=False).mean().iloc[-1])
         ema_50 = float(df["Close"].ewm(span=50, adjust=False).mean().iloc[-1])
         
@@ -99,22 +97,21 @@ def analyze_signal(symbol, timeframe):
         if pd.isna(volatility) or volatility == 0:
             volatility = current_price * 0.002
 
-        # হার্ড বা শক্তিশালী সিগন্যাল শর্ত (১%-২% অতিরিক্ত স্ট্রেন্থ বা চাপ নিশ্চিত করতে হবে)
-        # BUY এর ক্ষেত্রে: প্রাইস EMA-50 এর চেয়ে অন্তত ১% উপরে থাকতে হবে এবং RSI হতে হবে শক্তিশালী জোনে (যেমন: ৪৫ থেকে ৭০ এর মধ্যে)
-        is_strong_buy = (current_price >= ema_50 * 1.01) and (ema_20 > ema_50) and (45 <= rsi <= 70)
-        
-        # SELL এর ক্ষেত্রে: প্রাইস EMA-50 এর চেয়ে অন্তত ১% নিচে থাকতে হবে এবং RSI হতে হবে ডাউনট্রেন্ড জোনে (যেমন: ৩০ থেকে ৫৫ এর মধ্যে)
-        is_strong_sell = (current_price <= ema_50 * 0.99) and (ema_20 < ema_50) and (30 <= rsi <= 55)
-
-        if is_strong_buy:
-            stop_loss = current_price - (volatility * 1.8)
-            take_profit = current_price + (volatility * 3.5)
-            return "BUY", current_price, rsi, stop_loss, take_profit
+        if current_price > ema_50 and ema_20 > ema_50:
+            if 40 <= rsi <= 75:
+                stop_loss = current_price - (volatility * 1.5)
+                take_profit = current_price + (volatility * 3.0)
+                return "BUY", current_price, rsi, stop_loss, take_profit
+            else:
+                return "WAIT", current_price, rsi, 0.0, 0.0
                 
-        elif is_strong_sell:
-            stop_loss = current_price + (volatility * 1.8)
-            take_profit = current_price - (volatility * 3.5)
-            return "SELL", current_price, rsi, stop_loss, take_profit
+        elif current_price < ema_50 and ema_20 < ema_50:
+            if 25 <= rsi <= 60:
+                stop_loss = current_price + (volatility * 1.5)
+                take_profit = current_price - (volatility * 3.0)
+                return "SELL", current_price, rsi, stop_loss, take_profit
+            else:
+                return "WAIT", current_price, rsi, 0.0, 0.0
         else:
             return "WAIT", current_price, rsi, 0.0, 0.0
             
@@ -124,7 +121,7 @@ def analyze_signal(symbol, timeframe):
 # প্রধান শিরোনাম
 st.markdown('<p class="main-header">⚡ স্মার্ট মানি ট্রেডিং প্রো</p>', unsafe_allow_html=True)
 current_time = datetime.datetime.now().strftime("%I:%M:%S %p")
-st.markdown(f'<p class="sub-caption">🔄 লাইভ আপডেট (Hard Filter Mode): {current_time}</p>', unsafe_allow_html=True)
+st.markdown(f'<p class="sub-caption">🔄 লাইভ আপডেট (Single Line Mode): {current_time}</p>', unsafe_allow_html=True)
 st.markdown("---")
 
 market_view = st.radio(
@@ -167,22 +164,23 @@ for name, symbol in assets.items():
                 st.markdown(f"**{tf_name}**")
                 is_gc_crypto = "Gold" in name or "BTC" in name or "ETH" in name
                 
+                # সব তথ্য এক লাইনে (Single Line Formatting)
                 if status == "BUY":
                     if is_gc_crypto:
-                        st.success(f"🟢 **BUY**\nRSI: {rsi:.0f}\nSL: ${sl:,.1f}\nTP: ${tp:,.1f}")
+                        st.success(f"🟢 **BUY** | R:{rsi:.0f} | SL:${sl:,.0f} | TP:${tp:,.0f}")
                     else:
-                        st.success(f"🟢 **BUY**\nRSI: {rsi:.0f}\nSL: {sl:.4f}\nTP: {tp:.4f}")
+                        st.success(f"🟢 **BUY** | R:{rsi:.0f} | SL:{sl:.4f} | TP:{tp:.4f}")
                     signal_triggered = True
                 elif status == "SELL":
                     if is_gc_crypto:
-                        st.error(f"🔴 **SELL**\nRSI: {rsi:.0f}\nSL: ${sl:,.1f}\nTP: ${tp:,.1f}")
+                        st.error(f"🔴 **SELL** | R:{rsi:.0f} | SL:${sl:,.0f} | TP:${tp:,.0f}")
                     else:
-                        st.error(f"🔴 **SELL**\nRSI: {rsi:.0f}\nSL: {sl:.4f}\nTP: {tp:.4f}")
+                        st.error(f"🔴 **SELL** | R:{rsi:.0f} | SL:{sl:.4f} | TP:{tp:.4f}")
                     signal_triggered = True
                 else:
-                    st.warning(f"🟡 **WAIT**\nRSI: {rsi:.0f}")
+                    st.warning(f"🟡 **WAIT** | R:{rsi:.0f}")
                     
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=Type if 'Type' in globals() else 'div') # safer block closure
 
 if signal_triggered and sound_alert_enabled:
     st.markdown('<script>playAlertSound();</script>', unsafe_allow_html=True)
