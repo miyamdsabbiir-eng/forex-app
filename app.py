@@ -86,7 +86,7 @@ def analyze_signal(symbol, timeframe):
         rsi = float(rsi_series.iloc[-1]) if not rsi_series.empty and not pd.isna(rsi_series.iloc[-1]) else 50.0
         
         ema_20 = float(df["Close"].ewm(span=20, adjust=False).mean().iloc[-1])
-        ema_50 = float(df["Close'].ewm(span=50, adjust=False).mean().iloc[-1])
+        ema_50 = float(df["Close"].ewm(span=50, adjust=False).mean().iloc[-1])
 
         if current_price > ema_50 and ema_20 > ema_50:
             if 40 <= rsi <= 75:
