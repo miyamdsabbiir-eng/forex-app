@@ -176,12 +176,17 @@ for name, symbol in assets.items():
                         st.error(f"🔴 **SELL** | R:{rsi:.0f} | SL:${sl:,.0f} | TP:${tp:,.0f}")
                     else:
                         st.error(f"🔴 **SELL** | R:{rsi:.0f} | SL:{sl:.4f} | TP:{tp:.4f}")
-                    signal_triggered = True
-                else:
-st.warning(f"🟡 **WAIT** | R:{rsi:.0f}")
-                    
-        st.markdown('</div>', unsafe_allow_html=True)
+                        signal_triggered = True
+        elif status == "SELL":
+            if is_gc_crypto:
+                st.error(f"🔴 **SELL** | R:{rsi:.0f} | SL:${sl:,.0f} | TP:${tp:,.0f}")
+            else:
+                st.error(f"🔴 **SELL** | R:{rsi:.0f} | SL:{sl:.4f} | TP:{tp:.4f}")
+            signal_triggered = True
+        else:
+            st.warning(f"🟡 **WAIT** | R:{rsi:.0f}")
+            
+st.markdown('</div>', unsafe_allow_html=True)
 
 if signal_triggered and sound_alert_enabled:
     st.markdown('<script>playAlertSound();</script>', unsafe_allow_html=True)
-                    
