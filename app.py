@@ -1,20 +1,21 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
+import numpy as np
 import datetime
 from streamlit_autorefresh import st_autorefresh
 
 # পৃষ্ঠার কনফিগারেশন
 st.set_page_config(
-    page_title="Forex & Crypto Trading Dashboard",
-    page_icon="📈",
+    page_title="Ultra-Secure Smart Trading Dashboard",
+    page_icon="🛡️",
     layout="wide"
 )
 
-# অটো-রিফ্রেশ সময় ১৫ মিনিট (900000 মিলিভিসেকেন্ড) - মানসিক শান্তি ও সঠিক ডেটার জন্য সেরা
-st_autorefresh(interval=900000, limit=None, key="trading_dashboard_refresh")
+# অটো-রিফ্রেশ সময় ৫ মিনিট (৩০০০০০ মিলিভিসেকেন্ড)
+st_autorefresh(interval=300000, limit=None, key="safe_dashboard_refresh")
 
-# কাস্টম CSS (কার্ড ও এক লাইনে সিগন্যাল দেখানোর ফ্লেক্সবক্স স্টাইল)
+# কাস্টম CSS ডিজাইন (প্রফেশনাল ডার্ক থিম)
 st.markdown("""
 <style>
     .main-header {
@@ -60,10 +61,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# টাইমফ্রেমগুলোর তালিকা (১৫মি, ৩০মি, ১ঘ, ২ঘ, ৪ঘ, ১দিন)
 timeframes = ["15m", "30m", "1h", "2h", "4h", "1d"]
 
-def analyze_signal(symbol, timeframe):
+def analyze_ultra_safe_signal(symbol, timeframe):
     try:
         ticker = yf.Ticker(symbol)
         period_map = {
@@ -82,25 +82,46 @@ def analyze_signal(symbol, timeframe):
             
         current_price = float(df["Close"].iloc[-1])
         
+        # ১. EMA (20 & 50) - ট্রেন্ড ফিল্টার
+        ema_20 = df["Close"].ewm(span=20, adjust=False).mean()
+        ema_50 = df["Close"].ewm(span=50, adjust=False).mean()
+        
+        # ২. RSI (14) - মোমেন্টাম জোন
         delta = df["Close"].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
         rs = gain / loss
-        rsi_series = 100 - (100 / (1 + rs))
-        rsi = float(rsi_series.iloc[-1]) if not rsi_series.empty and not pd.isna(rsi_series.iloc[-1]) else 50.0
+        rsi = 100 - (100 / (1 + rs))
         
-        ema_20 = float(df["Close"].ewm(span=20, adjust=False).mean().iloc[-1])
-        ema_50 = float(df["Close"].ewm(span=50, adjust=False).mean().iloc[-1])
+        # ৩. MACD - ট্রেন্ড কনফার্মেশন
+        exp1 = df["Close"].ewm(span=12, adjust=False).mean()
+        exp2 = df["Close"].ewm(span=26, adjust=False).mean()
+        macd = exp1 - exp2
+        signal_line = macd.ewm(span=9, adjust=False).mean()
+        
+        # ৪. OBV (স্মার্ট মানি ভলিউম ফ্লো)
+        obv = (np.sign(df["Close"].diff()) * df["Volume"]).fillna(0).cumsum()
+        obv_ema = obv.ewm(span=20, adjust=False).mean()
 
-        # শক্তপোক্ত বা ফিল্টার করা শর্ত (যাতে সাধারণ ওঠানামায় সিগন্যাল না বদলায়)
-        if current_price > ema_50 and ema_20 > ema_50:
-            if 45 <= rsi <= 70:
+        curr_rsi = float(rsi.iloc[-1])
+        curr_macd = float(macd.iloc[-1])
+        curr_signal = float(signal_line.iloc[-1])
+        curr_ema20 = float(ema_20.iloc[-1])
+        curr_ema50 = float(ema_50.iloc[-1])
+        curr_obv = float(obv.iloc[-1])
+        curr_obv_ema = float(obv_ema.iloc[-1])
+
+        # লস এড়াতে অত্যন্ত কঠোর কনফ্লুয়েন্স লজিক (সব শর্ত একসাথে মিললেই কেবল সিগন্যাল দেবে)
+        if current_price > curr_ema50 and curr_ema20 > curr_ema50:
+            # অতিরিক্ত ওভারবট জোন এড়ানোর জন্য RSI < 65 রাখা হয়েছে যাতে পিক পয়েন্টে ফাসতে না হয়
+            if 50 <= curr_rsi <= 65 and curr_macd > curr_signal and curr_obv > curr_obv_ema:
                 return "BUY"
             else:
                 return "WAIT"
                 
-        elif current_price < ema_50 and ema_20 < ema_50:
-            if 30 <= rsi <= 55:
+        elif current_price < curr_ema50 and curr_ema20 < curr_ema50:
+            # অতিরিক্ত ওভারসোল্ড জোন এড়ানোর জন্য RSI > 35 রাখা হয়েছে
+            if 35 <= curr_rsi <= 50 and curr_macd < curr_signal and curr_obv < curr_obv_ema:
                 return "SELL"
             else:
                 return "WAIT"
@@ -110,31 +131,38 @@ def analyze_signal(symbol, timeframe):
     except Exception as e:
         return "WAIT"
 
-# হেডার অংশ
-st.markdown('<p class="main-header">📊 ফরেক্স ও গোল্ড মার্কেট ওভারভিউ</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-header">🛡️ প্রোটেক্টেড স্মার্ট মানি ট্রেডিং ড্যাশবোর্ড</p>', unsafe_allow_html=True)
 current_time = datetime.datetime.now().strftime("%I:%M:%S %p")
-st.markdown(f'<p class="sub-caption">🔄 শেষ আপডেট: {current_time} (প্রতি ১৫ মিনিটে স্বয়ংক্রিয় আপডেট)</p>', unsafe_allow_html=True)
+st.markdown(f'<p class="sub-caption">🔄 শেষ আপডেট: {current_time} (লস প্রটেকশন ফিল্টার সক্রিয়)</p>', unsafe_allow_html=True)
 st.markdown("---")
 
 market_view = st.radio(
     "সিলেক্ট করুন:",
-    options=["📈 ফরেক্স ও গোল্ড মার্কেট", "🪙 ক্রিপ্টো ও বিটকয়েন"],
+    options=["📈 ফরেক্স ও কমোডিটিস", "🪙 ক্রিপ্টোকারেন্সি"],
     horizontal=True,
     label_visibility="collapsed"
 )
 st.markdown("---")
 
-if market_view == "📈 ফরেক্স ও গোল্ড মার্কেট":
+if market_view == "📈 ফরেক্স ও কমোডিটিস":
     assets = {
         "Gold (GC/USD)": "GC=F",
+        "Silver (SI/USD)": "SI=F",
+        "Crude Oil": "CL=F",
         "EUR/USD": "EURUSD=X",
         "GBP/USD": "GBPUSD=X",
         "USD/JPY": "USDJPY=X",
+        "AUD/USD": "AUDUSD=X",
+        "USD/CAD": "USDCAD=X"
     }
 else:
     assets = {
         "Bitcoin (BTC/USD)": "BTC-USD",
         "Ethereum (ETH/USD)": "ETH-USD",
+        "Binance Coin (BNB/USD)": "BNB-USD",
+        "Solana (SOL/USD)": "SOL-USD",
+        "Ripple (XRP/USD)": "XRP-USD",
+        "Cardano (ADA/USD)": "ADA-USD"
     }
 
 for name, symbol in assets.items():
@@ -144,7 +172,7 @@ for name, symbol in assets.items():
         
         signals_html = '<div class="signals-row">'
         for tf_key in timeframes:
-            status = analyze_signal(symbol, tf_key)
+            status = analyze_ultra_safe_signal(symbol, tf_key)
             
             if status == "BUY":
                 dot = "🟢"
