@@ -3,6 +3,7 @@ import yfinance as yf
 import pandas as pd
 import datetime
 from streamlit_autorefresh import st_autorefresh
+
 # পৃষ্ঠার কনফিগারেশন
 st.set_page_config(
     page_title="Forex & Crypto Trading Dashboard",
@@ -10,10 +11,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# প্রতি ১০ সেকেন্ডে (10000 মিলিভিসেকেন্ড) পেজ অটো-রিফ্রেশ করার জন্য
-st_autorefresh(interval=10000, limit=None, key="trading_dashboard_refresh")
+# অটো-রিফ্রেশ সময় ১৫ মিনিট (900000 মিলিভিসেকেন্ড) - মানসিক শান্তি ও সঠিক ডেটার জন্য সেরা
+st_autorefresh(interval=900000, limit=None, key="trading_dashboard_refresh")
 
-# কাস্টম CSS (আগের ফ্লেক্সবক্স ও কার্ড স্টাইল অক্ষুণ্ণ রেখে)
+# কাস্টম CSS (কার্ড ও এক লাইনে সিগন্যাল দেখানোর ফ্লেক্সবক্স স্টাইল)
 st.markdown("""
 <style>
     .main-header {
@@ -38,23 +39,26 @@ st.markdown("""
         font-size: 1.1rem;
         font-weight: 600;
         color: #E2E8F0;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
     }
-    .dots-row {
+    .signals-row {
         display: flex;
-        gap: 6px; 
+        flex-wrap: wrap;
+        gap: 15px;
         align-items: center;
     }
-    .dot-item {
-        font-size: 1.3rem;
+    .signal-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background-color: #1E1E1E;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: #C5C6C7;
     }
 </style>
 """, unsafe_allow_html=True)
-
-# সাইডবার কন্ট্রোল
-st.sidebar.markdown("## ⚙️ সেটিংস")
-sound_alert_enabled = st.sidebar.toggle("🔊 সাউন্ড অ্যালার্ট", value=True)
-st.sidebar.markdown("---")
 
 # টাইমফ্রেমগুলোর তালিকা (১৫মি, ৩০মি, ১ঘ, ২ঘ, ৪ঘ, ১দিন)
 timeframes = ["15m", "30m", "1h", "2h", "4h", "1d"]
@@ -73,7 +77,7 @@ def analyze_signal(symbol, timeframe):
         period = period_map.get(timeframe, "60d")
         df = ticker.history(period=period, interval=timeframe)
         
-        if df.empty or len(df) < 20:
+        if df.empty or len(df) < 50:
             return "WAIT"
             
         current_price = float(df["Close"].iloc[-1])
@@ -88,14 +92,15 @@ def analyze_signal(symbol, timeframe):
         ema_20 = float(df["Close"].ewm(span=20, adjust=False).mean().iloc[-1])
         ema_50 = float(df["Close"].ewm(span=50, adjust=False).mean().iloc[-1])
 
+        # শক্তপোক্ত বা ফিল্টার করা শর্ত (যাতে সাধারণ ওঠানামায় সিগন্যাল না বদলায়)
         if current_price > ema_50 and ema_20 > ema_50:
-            if 40 <= rsi <= 75:
+            if 45 <= rsi <= 70:
                 return "BUY"
             else:
                 return "WAIT"
                 
         elif current_price < ema_50 and ema_20 < ema_50:
-            if 25 <= rsi <= 60:
+            if 30 <= rsi <= 55:
                 return "SELL"
             else:
                 return "WAIT"
@@ -108,7 +113,7 @@ def analyze_signal(symbol, timeframe):
 # হেডার অংশ
 st.markdown('<p class="main-header">📊 ফরেক্স ও গোল্ড মার্কেট ওভারভিউ</p>', unsafe_allow_html=True)
 current_time = datetime.datetime.now().strftime("%I:%M:%S %p")
-st.markdown(f'<p class="sub-caption">🔄 শেষ আপডেট: {current_time} (প্রতি ১০ সেকেন্ডে স্বয়ংক্রিয় আপডেট)</p>', unsafe_allow_html=True)
+st.markdown(f'<p class="sub-caption">🔄 শেষ আপডেট: {current_time} (প্রতি ১৫ মিনিটে স্বয়ংক্রিয় আপডেট)</p>', unsafe_allow_html=True)
 st.markdown("---")
 
 market_view = st.radio(
@@ -137,17 +142,19 @@ for name, symbol in assets.items():
         st.markdown(f'<div class="card">', unsafe_allow_html=True)
         st.markdown(f'<div class="card-title">🏷️ {name}</div>', unsafe_allow_html=True)
         
-        dots_html = '<div class="dots-row">'
+        signals_html = '<div class="signals-row">'
         for tf_key in timeframes:
             status = analyze_signal(symbol, tf_key)
             
             if status == "BUY":
-                dots_html += '<span class="dot-item">🟢</span>'
+                dot = "🟢"
             elif status == "SELL":
-                dots_html += '<span class="dot-item">🔴</span>'
+                dot = "🔴"
             else:
-                dots_html += '<span class="dot-item">🟡</span>'
+                dot = "🟡"
                 
-        dots_html += '</div>'
-        st.markdown(dots_html, unsafe_allow_html=True)
+            signals_html += f'<div class="signal-item"><b>{tf_key}</b>: {dot}</div>'
+                
+        signals_html += '</div>'
+        st.markdown(signals_html, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
