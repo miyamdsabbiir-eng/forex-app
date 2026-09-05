@@ -1,6 +1,9 @@
 import pandas as pd
 import streamlit as st
 import yfinance as yf
+from streamlit_autorefresh import st_autorefresh
+# প্রতি ৬০ সেকেন্ডে (৬০,০০০ মিলিসেকেন্ড) পেজটি অটোমেটিক রিফ্রেশ হবে
+st_autorefresh(interval=60000, limit=None, key="auto_refresh_counter")
 
 def get_one_line_signals(symbol="BTC-USD"):
     # বিভিন্ন টাইমফ্রেমের ডেটা ফেচ করা
@@ -40,8 +43,8 @@ def get_one_line_signals(symbol="BTC-USD"):
     return f"{symbol}  |  " + "  ".join(signs)
 
 # স্ট্রিমলিট ড্যাশবোর্ড ইন্টারফেস
-st.subheader("Multi-Timeframe Trend Dashboard (Crypto & Forex)")
-st.markdown("টাইমফ্রেম সিকোয়েন্স: **5m | 10m | 15m | 30m | 1h | 2h | 4h | 1d**")
+st.subheader("Live Multi-Timeframe Trend Dashboard")
+st.markdown("টাইমফ্রেম সিকোয়েন্স: **5m | 10m | 15m | 30m | 1h | 2h | 4h | 1d** (প্রতি ১ মিনিটে স্বয়ংক্রিয়ভাবে আপডেট হবে)")
 st.markdown("---")
 
 # ক্রিপ্টো এবং ফরেক্স পেয়ারগুলোর তালিকা
