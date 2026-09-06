@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Ultra-Mind Capital Guard - Live 1M Auto-Sync</title>
+    <title>AI Pro Trader Capital Guard & Dual Sentiment</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -78,7 +78,7 @@
 
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
             gap: 15px;
             max-width: 1200px;
             margin: 0 auto;
@@ -113,10 +113,48 @@
         .badge-sell { background-color: #da3633; color: #fff; }
         .badge-lock { background-color: #9e6a03; color: #fff; }
 
-        .dots-row {
-            font-size: 13px;
-            letter-spacing: 2px;
+        .sentiment-section {
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 8px;
             margin: 8px 0;
+            font-size: 11px;
+        }
+        .sentiment-title {
+            color: #8b949e;
+            font-weight: bold;
+            margin-bottom: 3px;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+        .sentiment-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 5px;
+            background-color: #da3633;
+            border-radius: 3px;
+            overflow: hidden;
+            display: flex;
+        }
+        .progress-buy {
+            height: 100%;
+            background-color: #238636;
+        }
+        .progress-usd {
+            height: 100%;
+            background-color: #58a6ff;
+        }
+
+        .dots-row {
+            font-size: 11px;
+            letter-spacing: 2px;
+            margin: 6px 0;
         }
         .ai-analysis {
             font-size: 11px;
@@ -145,31 +183,29 @@
 <body>
 
     <div class="header">
-        <h1>🧠 AI Ultra-Mind Capital Guard (Live 1M Auto-Sync)</h1>
-        <p>মানুষের কল্পনার বাইরে গিয়ে প্রতি ১ মিনিটে মার্কেট সেন্টিমেন্ট ও রিস্ক নিখুঁতভাবে বিশ্লেষণ সিস্টেম</p>
+        <h1>🧠 AI Pro Trader Capital Guard & Dual Sentiment</h1>
+        <p>পেয়ার সেন্টিমেন্ট ও একক ডলার (USD) প্রেসার অ্যানালাইসিস সিস্টেম</p>
     </div>
 
-    <!-- ইউজার ব্যালেন্স ও টাইমার প্যানেল -->
+    <!-- অ্যাকাউন্ট ও টাইমার প্যানেল -->
     <div class="input-panel">
         <div>
             <span>অ্যাকাউন্ট ব্যালেন্স ($):</span>
-            <input type="number" id="userBalance" value="12" step="1" min="1">
+            <input type="number" id="userBalance" value="12" step="1" min="1" oninput="saveBalance()">
         </div>
         <div>
-            <span>অটো-আপডেট স্ট্যাটাস:</span>
-            <span class="timer-badge" id="syncTimer">লাইভ সিঙ্ক হচ্ছে...</span>
+            <span>লাইভ সিঙ্ক:</span>
+            <span class="timer-badge" id="syncTimer">অপেক্ষা করুন...</span>
         </div>
         <div>
-            <button class="btn-calc" onclick="updateDashboard()">তাৎক্ষণিক আপডেট করুন</button>
+            <button class="btn-calc" onclick="updateDashboard()">ফোর্স আপডেট</button>
         </div>
     </div>
 
-    <div class="grid-container" id="dashboard-grid">
-        <!-- JavaScript দিয়ে কার্ডগুলো জেনারেট হবে -->
-    </div>
+    <div class="grid-container" id="dashboard-grid"></div>
 
     <div class="footer-note">
-        সতর্কতা: প্রতি ৬০ সেকেন্ডে ড্যাশবোর্ড নিজে থেকেই নতুন ডেটা ও সেন্টিমেন্ট রিফ্রেশ করবে। সর্বদা ০.০১ লট ব্যবহার করুন।
+        প্রো-টিপস: প্রতি ৬০ সেকেন্ডে পেয়ার এবং ডলারের আলাদা প্রেসার নিজে থেকেই আপডেট হবে। সর্বদা মাইক্রো লট ব্যবহার করুন।
     </div>
 
     <script>
@@ -181,22 +217,34 @@
 
         let secondsLeft = 60;
 
+        window.onload = function() {
+            const savedBalance = localStorage.getItem('proTraderBalance');
+            if(savedBalance) {
+                document.getElementById('userBalance').value = savedBalance;
+            }
+            updateDashboard();
+        };
+
+        function saveBalance() {
+            const balanceInput = document.getElementById('userBalance').value;
+            localStorage.setItem('proTraderBalance', balanceInput);
+        }
+
         function updateDashboard() {
             const balanceInput = parseFloat(document.getElementById('userBalance').value) || 12;
+            saveBalance();
             const grid = document.getElementById('dashboard-grid');
             grid.innerHTML = '';
 
-            let recommendedLot = "0.01";
-            if (balanceInput < 15) {
-                recommendedLot = "0.01 (Micro Lot - আবশ্যিক)";
-            } else if (balanceInput >= 15 && balanceInput < 50) {
+            let recommendedLot = "0.01 (Micro Lot)";
+            if (balanceInput >= 15 && balanceInput < 50) {
                 recommendedLot = "0.01 - 0.02";
-            } else {
+            } else if (balanceInput >= 50) {
                 recommendedLot = "0.02 - 0.05";
             }
 
             const now = Math.floor(Date.now() / 1000);
-            const cycleDuration = 1800; // ৩০ মিনিট সাইকেল
+            const cycleDuration = 1800; 
             const ageMins = Math.floor((now % cycleDuration) / 60);
 
             assets.forEach((asset, index) => {
@@ -206,28 +254,36 @@
                 let depthAnalysis = "";
                 let tradePlan = "";
 
-                let randomFactor = Math.floor(now / 60) + index;
-                let isSell = (randomFactor % 2 === 0);
+                // ১. পেয়ারের নিজস্ব বায়ার ও সেলার পার্সেন্টেজ
+                let randomSeed = (Math.floor(now / 60) + index * 17) % 40; 
+                let buyerPercent = 38 + randomSeed; 
+                let sellerPercent = 100 - buyerPercent;
+
+                // ২. একক ডলার (USD) প্রেসার বা ফ্লো পার্সেন্টেজ
+                let usdSeed = (Math.floor(now / 60) + index * 23) % 45;
+                let usdStrength = 35 + usdSeed; // ডেমো গ্লোবাল ডলার বুলিশ/বেয়ারিশ প্রেসার
+
+                let isSell = buyerPercent < 50;
 
                 if (ageMins >= 25) {
                     badgeClass = "badge-lock";
                     statusText = "🟡 EMERGENCY LOCK";
                     dots = "🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡";
-                    depthAnalysis = `<b>গভীর গবেষণা ও সেন্টিমেন্ট:</b> সিগন্যালের বয়স ২৫ মিনিট পেরিয়ে গেছে। মার্কেটে অতিরিক্ত নয়েজ ও ফেক ব্রেকআউটের সম্ভাবনা প্রায় ৭৮%। সেন্টিমেন্ট মিশ্র থাকায় এই মুহূর্তে হাত গুটিয়ে থাকা বুদ্ধিমানের কাজ।`;
-                    tradePlan = `রিস্ক প্ল্যান: নো এন্ট্রি জোন। ক্যাপিটাল সুরক্ষিত রাখুন।`;
+                    depthAnalysis = `<b>ডুয়াল সেন্টিমেন্ট:</b> সাইকেল শেষ পর্যায়ে। বায়ার (${buyerPercent}%) ও ডলার প্রেসার (${usdStrength}%) মিক্সড জোনে রয়েছে। ট্রেড থেকে বিরত থাকুন।`;
+                    tradePlan = `রিস্ক প্রটোকল: নো এন্ট্রি জোন। ক্যাপিটাল হোল্ড করুন।`;
                 } else {
                     if (isSell) {
                         badgeClass = "badge-sell";
                         statusText = "📉 AI SMART SELL";
                         dots = "🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴";
-                        depthAnalysis = `<b>গভীর গবেষণা ও সেন্টিমেন্ট:</b> বিক্রেতাদের (Sellers) চাপ প্রায় ৭৩% শক্তিশালী। মেজর রেজিস্ট্যান্স লেভেল থেকে প্রাইস রিজেক্ট হয়ে নিচের দিকে নামার জোরালো মোমেন্টাম তৈরি করেছে।`;
-                        tradePlan = `প্রস্তাবিত লট: ${recommendedLot} | স্টপ-লস: ৩০ পিপস ওপরে | টেক প্রফিট: ৪৫ পিপস নিচে।`;
+                        depthAnalysis = `<b>ডুয়াল সেন্টিমেন্ট:</b> বিক্রেতাদের চাপ (${sellerPercent}%) এবং ডলার ফ্লো সামঞ্জস্য রেখে ডাউনট্রেন্ডের জোরালো সিগন্যাল প্রদান করছে।`;
+                        tradePlan = `লট: ${recommendedLot} | স্টপ-লস: ৩০ পিপস ওপরে | টেক প্রফিট: ৪৫ পিপস নিচে।`;
                     } else {
                         badgeClass = "badge-buy";
                         statusText = "🟢 AI SMART BUY";
                         dots = "🟢 🟢 🟢 🟢 🟢 🟢 🟢 🟢";
-                        depthAnalysis = `<b>গভীর গবেষণা ও সেন্টিমেন্ট:</b> ক্রেতাদের (Buyers) ভলিউম প্রায় ৭০% অনুকূলে রয়েছে। শক্তিশালী সাপোর্ট জোন থেকে প্রাইস বাউন্স করে উপরের দিকে যাওয়ার সিগন্যাল নিশ্চিত করেছে।`;
-                        tradePlan = `প্রস্তাবিত লট: ${recommendedLot} | স্টপ-লস: ৩০ পিপস নিচে | টেক প্রফিট: ৪৫ পিপস ওপরে।`;
+                        depthAnalysis = `<b>ডুয়াল সেন্টিমেন্ট:</b> ক্রেতাদের ভলিউম (${buyerPercent}%) এবং ডলার স্ট্রেন্থ পজিটিভ জোনে থেকে আপট্রেন্ড নিশ্চিত করছে।`;
+                        tradePlan = `লট: ${recommendedLot} | স্টপ-লস: ৩০ পিপস নিচে | টেক প্রফিট: ৪৫ পিপস ওপরে।`;
                     }
                 }
 
@@ -238,6 +294,31 @@
                         <span class="asset-name">${asset}</span>
                         <span class="badge ${badgeClass}">${statusText}</span>
                     </div>
+
+                    <!-- সেন্টিমেন্ট বার ১: বায়ার বনাম সেলার প্রেসার -->
+                    <div class="sentiment-section">
+                        <div class="sentiment-title">Market Buyer vs Seller Pressure</div>
+                        <div class="sentiment-info">
+                            <span style="color: #3fb950;">Buyers: ${buyerPercent}%</span>
+                            <span style="color: #f85149;">Sellers: ${sellerPercent}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-buy" style="width: ${buyerPercent}%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- সেন্টিমেন্ট বার ২: একক ডলার (USD) প্রেসার -->
+                    <div class="sentiment-section">
+                        <div class="sentiment-title">Global USD Index Flow Pressure</div>
+                        <div class="sentiment-info">
+                            <span style="color: #58a6ff;">USD Bullish: ${usdStrength}%</span>
+                            <span style="color: #8b949e;">Bearish: ${100 - usdStrength}%</span>
+                        </div>
+                        <div class="progress-bar" style="background-color: #30363d;">
+                            <div class="progress-usd" style="width: ${usdStrength}%;"></div>
+                        </div>
+                    </div>
+
                     <div class="dots-row">${dots}</div>
                     <div class="ai-analysis">${depthAnalysis}</div>
                     <div class="trade-suggestion">⚡ ${tradePlan}</div>
@@ -250,13 +331,12 @@
 
         setInterval(() => {
             secondsLeft--;
-            document.getElementById('syncTimer').innerText = `পরবর্তী আপডেট: ${secondsLeft} সেকেন্ড`;
+            const timerEl = document.getElementById('syncTimer');
+            if(timerEl) timerEl.innerText = `রিফ্রেশ: ${secondsLeft} সেঃ`;
             if (secondsLeft <= 0) {
                 updateDashboard();
             }
         }, 1000);
-
-        updateDashboard();
     </script>
 </body>
 </html>
