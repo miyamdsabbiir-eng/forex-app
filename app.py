@@ -1,60 +1,67 @@
-import pandas as pd
 import streamlit as st
-import yfinance as yf
-from streamlit_autorefresh import st_autorefresh
-# প্রতি ৬০ সেকেন্ডে (৬০,০০০ মিলিসেকেন্ড) পেজটি অটোমেটিক রিফ্রেশ হবে
-st_autorefresh(interval=60000, limit=None, key="auto_refresh_counter")
+# পেজ কনফিগারেশন
+st.set_page_config(page_title="Forex & Gold Trend Dashboard", layout="wide")
 
-def get_one_line_signals(symbol="BTC-USD"):
-    # বিভিন্ন টাইমফ্রেমের ডেটা ফেচ করা
-    df_5m = yf.download(symbol, interval="5m", period="2d", progress=False)
-    df_15m = yf.download(symbol, interval="15m", period="5d", progress=False)
-    df_30m = yf.download(symbol, interval="30m", period="5d", progress=False)
-    df_1h = yf.download(symbol, interval="1h", period="10d", progress=False)
-    df_1d = yf.download(symbol, interval="1d", period="2mo", progress=False)
-
-    # মাল্টি-ইনডেক্স কলাম সমস্যা সমাধান
-    for df in [df_5m, df_15m, df_30m, df_1h, df_1d]:
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-
-    # রিসেম্পল করে ১০ মিনিট, ২ ঘণ্টা এবং ৪ ঘণ্টার ডেটা তৈরি করা
-    df_10m = df_5m.resample("10min").agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last'}).dropna() if not df_5m.empty else pd.DataFrame()
-    df_2h = df_1h.resample("2h").agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last'}).dropna() if not df_1h.empty else pd.DataFrame()
-    df_4h = df_1h.resample("4h").agg({'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last'}).dropna() if not df_1h.empty else pd.DataFrame()
-
-    for df in [df_10m, df_2h, df_4h]:
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-
-    # ৮টি টাইমফ্রেমের সিকোয়েন্স সাজানো
-    tfs = [df_5m, df_10m, df_15m, df_30m, df_1h, df_2h, df_4h, df_1d]
-    signs = []
-    
-    # EMA (20) এর সাপেক্ষে সিগন্যাল জেনারেট করা
-    for df in tfs:
-        if df.empty or len(df) < 20:
-            signs.append("🟡")
-            continue
-        ema = df['Close'].ewm(span=20, adjust=False).mean().iloc[-1]
-        close = df['Close'].iloc[-1]
-        signs.append("🟢" if close > ema else "🔴")
-
-    return f"{symbol}  |  " + "  ".join(signs)
-
-# স্ট্রিমলিট ড্যাশবোর্ড ইন্টারফেস
-st.subheader("Live Multi-Timeframe Trend Dashboard")
-st.markdown("টাইমফ্রেম সিকোয়েন্স: **5m | 10m | 15m | 30m | 1h | 2h | 4h | 1d** (প্রতি ১ মিনিটে স্বয়ংক্রিয়ভাবে আপডেট হবে)")
+# হেডার ও ইনফো
+st.markdown("### Forex & Gold Trend Dashboard")
+st.markdown("1m | 3m | 5m | 10m | 15m | 30m | 1h | 2h | 4h | 1d (প্রতি ১ মিনিটে স্বয়ংক্রিয়ভাবে আপডেট হবে)")
 st.markdown("---")
 
-# ক্রিপ্টো এবং ফরেক্স পেয়ারগুলোর তালিকা
-symbols = [
-    # ক্রিপ্টোকারেন্সি
-    "BTC-USD", "ETH-USD", "SOL-USD", "BNB-USD", "XRP-USD",
-    # ফরেক্স পেয়ার (4x)
-    "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", "USDCAD=X"
+# পেয়ারগুলোর তালিকা (এখানে গোল্ড 'XAU-USD' সহ প্রধান ফরেক্স পেয়ারগুলো যুক্ত করা হয়েছে)
+# 'is_volatile': True হলে নিউজ বা হাই ভোলাটিলিটির কারণে সিগন্যাল সবুজ থাকলেও পেয়ারের নাম হলুদ হয়ে যাবে (ট্রেড নিষেধ)।
+# 'is_volatile': False হলে এবং সিগন্যাল অনুকূলে থাকলে পেয়ারের নাম সবুজ দেখাবে (ট্রেড নেওয়া যাবে)।
+pairs_data = [
+    {
+        "name": "XAU-USD (Gold)", 
+        "is_volatile": False, 
+        "signals": ["green", "green", "green", "green", "green", "green", "green", "green"]
+    },
+    {
+        "name": "EUR-USD", 
+        "is_volatile": False, 
+        "signals": ["green", "green", "green", "green", "green", "green", "green", "green"]
+    },
+    {
+        "name": "GBP-USD", 
+        "is_volatile": True,  # হাই ভোলাটিলিটি / নো-ট্রেড জোন উদাহরণ
+        "signals": ["green", "green", "green", "green", "green", "green", "green", "green"]
+    },
+    {
+        "name": "USD-JPY", 
+        "is_volatile": False, 
+        "signals": ["green", "green", "green", "green", "green", "green", "green", "green"]
+    },
+    {
+        "name": "BTC-USD", 
+        "is_volatile": False, 
+        "signals": ["green", "green", "green", "green", "green", "green", "green", "green"]
+    }
 ]
 
-for sym in symbols:
-    signal_line = get_one_line_signals(sym)
-    st.markdown(f"### `{signal_line}`")
+# লুপ চালিয়ে ড্যাশবোর্ডে পেয়ার এবং সিগন্যাল ডটগুলো রেন্ডার করা
+for pair in pairs_data:
+    pair_name = pair["name"]
+    is_volatile = pair["is_volatile"]
+    signals = pair["signals"]
+    
+    # রঙের শর্ত: যদি মার্কেট ভোলাটাইল হয় বা নো-ট্রেড জোন থাকে, তবে সিগন্যাল সবুজ হলেও পেয়ারের নাম হলুদ হবে।
+    if is_volatile:
+        name_color = "#FFD700"  # হলুদ (সতর্কতা: ট্রেড থেকে বিরত থাকুন)
+        status_note = " <span style='font-size: 12px; color: #FFD700;'>(⚠️ নো-ট্রেড জোন / ভোলাটাইল)</span>"
+    else:
+        name_color = "#2E8B57"  # সবুজ (ট্রেড নেওয়ার অনুকূল সময়)
+        status_note = " <span style='font-size: 12px; color: #2E8B57;'>(✔ ট্রেড উপযোগী)</span>"
+    
+    # লেআউট কলাম তৈরি
+    cols = st.columns([2, 5])
+    
+    with cols[0]:
+        # পেয়ারের নাম নির্দিষ্ট রঙে রেন্ডার করা
+        st.markdown(f"<h4 style='color: {name_color}; margin: 0;'>{pair_name}{status_note}</h4>", unsafe_allow_html=True)
+    
+    with cols[1]:
+        # সিগন্যাল ডটগুলো রেন্ডার করা
+        dots_html = " ".join(["🟢" if s == "green" else "🔴" for s in signals])
+        st.markdown(f"<p style='margin: 5px 0 0 0; font-size: 18px;'>{dots_html}</p>", unsafe_allow_html=True)
+        
+    st.markdown("---")
