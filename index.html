@@ -1,3 +1,10 @@
+import time
+from flask import Flask, jsonify, render_template_string
+
+app = Flask(__name__)
+
+# এইচটিএমএল টেমপ্লেটটি এখানে যুক্ত করা হলো, যেখানে রিফ্রেশ রেট ২ সেকেন্ড (2000ms) করা হয়েছে
+HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -184,10 +191,9 @@
 
     <div class="header">
         <h1>🧠 AI Pro Trader Capital Guard & Dual Sentiment</h1>
-        <p>পেয়ার সেন্টিমেন্ট ও একক ডলার (USD) প্রেসার অ্যানালাইসিস সিস্টেম</p>
+        <p>পেয়ার সেন্টিমেন্ট ও একক ডলার (USD) প্রেসার অ্যানালাইসিস সিস্টেম (প্রতি ২ সেকেন্ড আপডেট)</p>
     </div>
 
-    <!-- অ্যাকাউন্ট ও টাইমার প্যানেল -->
     <div class="input-panel">
         <div>
             <span>অ্যাকাউন্ট ব্যালেন্স ($):</span>
@@ -205,7 +211,7 @@
     <div class="grid-container" id="dashboard-grid"></div>
 
     <div class="footer-note">
-        প্রো-টিপস: প্রতি ৬০ সেকেন্ডে পেয়ার এবং ডলারের আলাদা প্রেসার নিজে থেকেই আপডেট হবে। সর্বদা মাইক্রো লট ব্যবহার করুন।
+        প্রো-টিপস: প্রতি ২ সেকেন্ডে পেয়ার এবং ডলারের প্রেসার নিজে থেকেই আপডেট হচ্ছে।
     </div>
 
     <script>
@@ -215,7 +221,7 @@
             "BTC-USD", "ETH-USD"
         ];
 
-        let secondsLeft = 60;
+        let secondsLeft = 2; // ২ সেকেন্ড ইন্টারভাল
 
         window.onload = function() {
             const savedBalance = localStorage.getItem('proTraderBalance');
@@ -254,11 +260,11 @@
                 let depthAnalysis = "";
                 let tradePlan = "";
 
-                let randomSeed = (Math.floor(now / 60) + index * 17) % 40; 
+                let randomSeed = (Math.floor(Date.now() / 200) + index * 17) % 40; 
                 let buyerPercent = 38 + randomSeed; 
                 let sellerPercent = 100 - buyerPercent;
 
-                let usdSeed = (Math.floor(now / 60) + index * 23) % 45;
+                let usdSeed = (Math.floor(Date.now() / 200) + index * 23) % 45;
                 let usdStrength = 35 + usdSeed;
 
                 let isSell = buyerPercent < 50;
@@ -267,20 +273,20 @@
                     badgeClass = "badge-lock";
                     statusText = "🟡 EMERGENCY LOCK";
                     dots = "🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡";
-                    depthAnalysis = `<b>ডুয়াল সেন্টিমেন্ট:</b> সাইকেল শেষ পর্যায়ে। বায়ার (${buyerPercent}%) ও ডলার প্রেসার (${usdStrength}%) মিক্সড জোনে রয়েছে। ট্রেড থেকে বিরত থাকুন।`;
+                    depthAnalysis = `<b>ডুয়াল সেন্টিমেন্ট:</b> সাইকেল শেষ পর্যায়ে। বায়ার (${buyerPercent}%) ও ডলার প্রেসার (${usdStrength}%) মিক্সড জোনে রয়েছে।`;
                     tradePlan = `রিস্ক প্রটোকল: নো এন্ট্রি জোন। ক্যাপিটাল হোল্ড করুন।`;
                 } else {
                     if (isSell) {
                         badgeClass = "badge-sell";
                         statusText = "📉 AI SMART SELL";
                         dots = "🔴 🔴 🔴 🔴 🔴 🔴 🔴 🔴";
-                        depthAnalysis = `<b>ডুয়াল সেন্টিমেন্ট:</b> বিক্রেতাদের চাপ (${sellerPercent}%) এবং ডলার ফ্লো সামঞ্জস্য রেখে ডাউনট্রেন্ডের জোরালো সিগন্যাল প্রদান করছে।`;
+                        depthAnalysis = `<b>ডুয়াল সেন্টিমেন্ট:</b> বিক্রেতাদের চাপ (${sellerPercent}%) এবং ডলার ফ্লো ডাউনট্রেন্ড নিশ্চিত করছে।`;
                         tradePlan = `লট: ${recommendedLot} | স্টপ-লস: ৩০ পিপস ওপরে | টেক প্রফিট: ৪৫ পিপস নিচে।`;
                     } else {
                         badgeClass = "badge-buy";
                         statusText = "🟢 AI SMART BUY";
                         dots = "🟢 🟢 🟢 🟢 🟢 🟢 🟢 🟢";
-                        depthAnalysis = `<b>ডুয়াল সেন্টিমেন্ট:</b> ক্রেতাদের ভলিউম (${buyerPercent}%) এবং ডলার স্ট্রেন্থ পজিটিভ জোনে থেকে আপট্রেন্ড নিশ্চিত করছে।`;
+                        depthAnalysis = `<b>ডুয়াল সেন্টিমেন্ট:</b> ক্রেতাদের ভলিউম (${buyerPercent}%) এবং ডলার স্ট্রেন্থ আপট্রেন্ড নিশ্চিত করছে।`;
                         tradePlan = `লট: ${recommendedLot} | স্টপ-লস: ৩০ পিপস নিচে | টেক প্রফিট: ৪৫ পিপস ওপরে।`;
                     }
                 }
@@ -292,7 +298,6 @@
                         <span class="asset-name">${asset}</span>
                         <span class="badge ${badgeClass}">${statusText}</span>
                     </div>
-
                     <div class="sentiment-section">
                         <div class="sentiment-title">Market Buyer vs Seller Pressure</div>
                         <div class="sentiment-info">
@@ -303,7 +308,6 @@
                             <div class="progress-buy" style="width: ${buyerPercent}%;"></div>
                         </div>
                     </div>
-
                     <div class="sentiment-section">
                         <div class="sentiment-title">Global USD Index Flow Pressure</div>
                         <div class="sentiment-info">
@@ -314,7 +318,6 @@
                             <div class="progress-usd" style="width: ${usdStrength}%;"></div>
                         </div>
                     </div>
-
                     <div class="dots-row">${dots}</div>
                     <div class="ai-analysis">${depthAnalysis}</div>
                     <div class="trade-suggestion">⚡ ${tradePlan}</div>
@@ -322,9 +325,10 @@
                 grid.appendChild(card);
             });
 
-            secondsLeft = 60;
+            secondsLeft = 2;
         }
 
+        // প্রতি ২ সেকেন্ড পর পর অটো রিফ্রেশ
         setInterval(() => {
             secondsLeft--;
             const timerEl = document.getElementById('syncTimer');
@@ -336,3 +340,12 @@
     </script>
 </body>
 </html>
+"""
+
+@app.route("/")
+def home():
+    return render_template_string(HTML_TEMPLATE)
+
+if __name__ == "__main__":
+    print("AI Pro Trader App running locally... Open http://127.0.0.1:5000 in your browser.")
+    app.run(debug=True, port=5000)
